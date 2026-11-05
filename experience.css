@@ -293,3 +293,8 @@ body.home-page footer { border-top:0; }
   body.home-page .home-lower { margin-top:0; }
   body.home-page .home-main { pointer-events:auto; }
 }
+
+/* Stage art: replace either PNG in assets/backgrounds without editing this layout. */
+.stage { aspect-ratio:395/223; }
+#stage .scene-art.loaded { filter:none !important; }
+#stage .mic { display:none; }

@@ -92,7 +92,7 @@ Replace files in place where possible: keep the filename, folder, format, image 
 |---|---|---|
 | Home backgrounds / 首页背景 | `assets/backgrounds/home-sunset.png`, `home-night.png` | Keep the original ratio; the computer is part of the background. / 保持原图比例；电脑已包含在背景图中。 |
 | Home cats / 首页猫咪 | Matching transparent PNGs in `assets/pets/`; Night files include `-night`. / `assets/pets/` 对应透明 PNG；夜晚版本文件名带 `-night`。 | Keep canvas and subject placement similar. / 保持画布和主体位置相近。 |
-| Stage background / 工作室背景 | `assets/backgrounds/seaside-park.png` | Keep the filename and folder. / 保留文件名和目录。 |
+| Stage background / 工作室背景 | `assets/backgrounds/stage-neon-night.png`, `stage-sunny-park.png` | Replace either PNG in place and keep its filename and canvas ratio. / 原位替换任一 PNG，保留文件名和画布比例。 |
 | Example sounds / 示例声音 | WAV files in `assets/sounds/` | Keep WAV format and filenames. / 保持 WAV 格式和文件名。 |
 | Home logo and buttons / 首页 Logo 与按钮 | `assets/wer-christmas-ui/` | Keep transparent edges; button canvas is 300 × 100 px. / 保留透明边缘；按钮画布为 300 × 100 像素。 |
 

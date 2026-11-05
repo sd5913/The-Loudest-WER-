@@ -1,8 +1,8 @@
-Replaceable stage background / 可替换舞台背景
+Replaceable music stages / 可替换音乐舞台
 
-To use your own artwork, add a PNG named seaside-park.png in this folder:
-assets/backgrounds/seaside-park.png
+Neon Night / 霓虹夜晚: stage-neon-night.png
+Sunny Park / 晴天公园: stage-sunny-park.png
 
-Recommended size: 640 × 340 px, matching the stage ratio. Use a full-scene PNG; it will be pixel-rendered and cropped to fill the stage. Refresh the page after replacing it. If the file is absent, the built-in sunset scene is drawn automatically.
+Replace either PNG in this folder, keeping the filename and 395 × 223 canvas ratio. Refresh the Music Studio page and select the corresponding scene. The picture includes the central microphone, so keep it in the new artwork.
 
-放入同名 PNG「seaside-park.png」即可替换舞台背景。建议尺寸 640 × 340 px，与舞台比例一致；替换后刷新网页。未放入图片时会自动显示内置黄昏场景。
+在此文件夹原位替换任一 PNG，保留文件名及 395 × 223 的画布比例。刷新音乐工作室页面，再选择对应场景。中央麦克风已包含在图片中，新图也请保留。
