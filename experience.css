@@ -129,7 +129,7 @@ body[data-time="sunset"] .room-pet-art.sunset-art, body[data-time="night"] .room
 .stage-pet[data-id="ghost-cat"] .pet-png, .pet-card[data-select="ghost-cat"] .pet-png { filter:grayscale(.62) brightness(1.35) drop-shadow(2px 3px #0b091955); }
 .stage-pet[data-id="bat-cat"] .pet-png, .pet-card[data-select="bat-cat"] .pet-png { filter:hue-rotate(35deg) brightness(.76) drop-shadow(2px 3px #0b091955); }
 .stage-pet[data-id="cat"]::after, .stage-pet[data-id="ghost-cat"]::after, .stage-pet[data-id="bat-cat"]::after { position:absolute; z-index:1; top:3%; right:15%; font:14px 'Courier New',monospace; text-shadow:1px 1px #18102c,0 0 6px #ffca6a99; }
-.stage-pet[data-id="cat"]::after { content:"🎃"; }
+.stage-pet[data-id="cat"]::after { content:"✦"; color:#ffe16a; }
 .stage-pet[data-id="ghost-cat"]::after { content:"✧"; color:#e4e0ff; }
 .stage-pet[data-id="bat-cat"]::after { content:"☾"; color:#cfafff; }
 .adoption-copy { padding:13px; }
@@ -161,6 +161,19 @@ body[data-time="sunset"] .room-pet-art.sunset-art, body[data-time="night"] .room
 .save-song { font:10px 'Courier New',monospace; }
 .scene-picker { display:flex; align-items:center; gap:8px; color:#ffe16a; font:8px 'Courier New',monospace; white-space:nowrap; }
 .scene-picker select { width:auto; padding:6px 8px; font:9px Arial,sans-serif; }
+.scene-add { display:inline-flex; align-items:center; gap:5px; min-height:27px; padding:3px 8px; color:#ffe7b7; background:#2a1748; border:1px solid #e79be9; box-shadow:2px 2px 0 #150c2d,0 0 8px #e674c455; font:14px 'Courier New',monospace; white-space:nowrap; }
+.scene-add span { font:9px Arial,sans-serif; }
+.scene-add small { color:#dbbcdf; font-size:8px; }
+.scene-add:hover, .scene-add:focus-visible { box-shadow:2px 2px 0 #150c2d,0 0 13px #fdb2ef; }
+.scene-form { display:grid; gap:13px; min-width:min(420px,80vw); }
+#sceneDialog { max-height:90vh; overflow-y:auto; }
+.scene-form p { margin:0; }
+.scene-form label { display:grid; gap:6px; color:#fff0d8; font:11px Arial,sans-serif; }
+.scene-form label small { color:#cbb9dc; }
+.scene-form input { width:100%; padding:9px; background:#100d22; border:1px solid #a674cf; color:#fff0d8; }
+.scene-form input[type="file"] { font-size:10px; }
+.scene-form-actions { display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
+.scene-form-hint { max-width:390px; color:#cbb9dc; font:10px/1.5 Arial,sans-serif; }
 #stage[data-scene="seaside"] #landscape, #stage[data-scene="seaside"] .scene-art { filter:sepia(.16) hue-rotate(11deg) saturate(1.15); }
 #stage[data-scene="cozy"] #landscape, #stage[data-scene="cozy"] .scene-art { filter:hue-rotate(30deg) brightness(.83) saturate(.8); }
 body[data-time="day"] #stage:not([data-scene="seaside"]):not([data-scene="cozy"]) #landscape,
@@ -216,8 +229,10 @@ body[data-time="night"] { background-image:linear-gradient(90deg,#64d8f20b 1px,t
   .song-art { height:63px; }
   .song-info h2 { font-size:16px; }
   .song-actions { grid-column:1/-1; justify-content:flex-start; }
-  .scene-picker { max-width:49%; flex-wrap:wrap; font-size:7px; }
+  .scene-picker { max-width:65%; flex-wrap:wrap; font-size:7px; }
   .scene-picker select { max-width:100%; font-size:8px; }
+  .scene-add span { display:none; }
+  .stage-window > .titlebar { height:auto; min-height:34px; flex-wrap:wrap; gap:7px; padding:7px 10px; }
   .workspace { grid-template-columns:minmax(0,1fr) 250px; }
 }
 @media (max-width:760px) { .workspace { display:flex; flex-direction:column; } }
