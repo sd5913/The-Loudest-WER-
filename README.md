@@ -1,6 +1,8 @@
 # The-Loudest-WER-
 A pixel pet music playground
+
 **每周进度 &成员贡献 &主要修改**
+
 WEEK1:
 
 · Youxiu 负责更新任务栏和项目进度。
