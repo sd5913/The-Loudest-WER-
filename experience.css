@@ -285,9 +285,9 @@ body.home-page[data-time="day"] .topnav .plain.current, body.home-page[data-time
 body.home-page[data-time="day"] .topnav .plain small, body.home-page[data-time="sunset"] .topnav .plain small { color:#604327; }
 body.home-page .home-intro { display:none; }
 body.home-page .home-intro > div { display:none; }
-body.home-page .home-actions { position:absolute; z-index:4; top:calc(100vh - 608px); left:0; right:0; display:grid; grid-template-columns:repeat(3,minmax(0,210px)); justify-content:space-evenly; gap:clamp(18px,4vw,72px); max-width:none; margin:0; }
+body.home-page .home-actions { position:fixed; z-index:4; left:50%; bottom:clamp(32px,7vh,80px); width:min(760px,calc(100vw - 48px)); display:grid; grid-template-columns:repeat(3,minmax(0,210px)); justify-content:space-between; gap:clamp(10px,2.5vw,34px); margin:0; transform:translateX(-50%); }
 body.home-page .home-action { width:100%; max-width:210px; justify-self:center; }
-body.home-page .home-lower { margin-top:calc(100vh + 30px); }
+body.home-page .home-lower, body.home-page .home-main > footer { display:none; }
 body.home-page .mini-window { border:0; border-radius:0; box-shadow:none; background:transparent; }
 body.home-page .mini-window .titlebar { border:0; background:transparent; }
 body.home-page .mini-window .recent-list { background:transparent; }
@@ -303,10 +303,14 @@ body.home-page footer { border-top:0; }
   body.home-page .home-intro { position:relative; top:auto; right:auto; display:flex; padding:18px 0 12px; }
   body.home-page .home-intro > div { display:block; }
   body.home-page .home-intro h1 { font-size:34px; }
-  body.home-page .home-actions { position:relative; top:auto; left:auto; right:auto; bottom:auto; grid-template-columns:minmax(0,210px); justify-content:center; gap:5px; margin:16px 0 48px; }
+  body.home-page .home-actions { position:relative; top:auto; left:auto; right:auto; bottom:auto; width:auto; grid-template-columns:minmax(0,210px); justify-content:center; gap:5px; margin:16px auto 48px; transform:none; }
   body.home-page .home-action { max-width:210px; }
-  body.home-page .home-lower { margin-top:0; }
+  body.home-page .home-lower, body.home-page .home-main > footer { display:none; }
   body.home-page .home-main { pointer-events:auto; }
+}
+
+@media (min-width:621px) and (max-width:900px) {
+  body.home-page .home-actions { max-width:min(100%,700px); bottom:clamp(26px,6vh,64px); }
 }
 
 /* Stage art: replace either PNG in assets/backgrounds without editing this layout. */
