@@ -119,7 +119,7 @@ Music, adopted pets, and custom pet details are stored in this browser only. **S
 音乐、领养宠物和自定义资料仅保存在当前浏览器。**Share（分享）**复制本地工作室网址，不会上传歌曲或生成公开链接。本初版没有账号系统、云端同步或服务器存储。
 
 
-**每周进度 &成员贡献 &主要修改**
+## 每周进度 &成员贡献 &主要修改
 
 **WEEK1:**
 
