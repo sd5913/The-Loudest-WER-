@@ -25,6 +25,11 @@ A pixel pet music playground
 
 **WEEK3：**
 
+
+
+
+
+
 <p align="center">
   <img src="assets/wer-christmas-ui/logo_sunset.png" alt="The Loudest WER! logo" width="300">
 </p>
