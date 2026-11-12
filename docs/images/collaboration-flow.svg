@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 310" role="img" aria-labelledby="title desc">
+  <title id="title">GitHub team collaboration flow</title>
+  <desc id="desc">Create a personal feature branch, edit and commit, push the branch, open a pull request, review, then merge to main.</desc>
+  <rect width="1200" height="310" fill="#100c20"/>
+  <path d="M0 18h1200M0 292h1200" stroke="#493666" stroke-width="2" stroke-dasharray="8 8"/>
+  <text x="40" y="57" fill="#ffe16a" font-family="monospace" font-size="15" letter-spacing="3">SAFE TEAM LOOP / 小组协作流程</text>
+  <g font-family="monospace" text-anchor="middle">
+    <g transform="translate(36 96)"><rect width="166" height="129" fill="#21183d" stroke="#ff78bc" stroke-width="2"/><text x="83" y="42" fill="#ff78bc" font-size="13">01</text><text x="83" y="68" fill="#fff0df" font-size="14">FEATURE BRANCH</text><text x="83" y="94" fill="#bba8d4" font-family="Arial,sans-serif" font-size="12">个人分支</text><text x="83" y="116" fill="#ffe16a" font-size="10">feature/name-task</text></g>
+    <g transform="translate(238 96)"><rect width="166" height="129" fill="#21183d" stroke="#8065ae" stroke-width="2"/><text x="83" y="42" fill="#ffe16a" font-size="13">02</text><text x="83" y="68" fill="#fff0df" font-size="14">EDIT + COMMIT</text><text x="83" y="94" fill="#bba8d4" font-family="Arial,sans-serif" font-size="12">修改并提交</text><text x="83" y="116" fill="#bba8d4" font-size="10">small, clear changes</text></g>
+    <g transform="translate(440 96)"><rect width="166" height="129" fill="#21183d" stroke="#8065ae" stroke-width="2"/><text x="83" y="42" fill="#ff78bc" font-size="13">03</text><text x="83" y="68" fill="#fff0df" font-size="14">PUSH BRANCH</text><text x="83" y="94" fill="#bba8d4" font-family="Arial,sans-serif" font-size="12">推送自己的分支</text><text x="83" y="116" fill="#bba8d4" font-size="10">never push to main</text></g>
+    <g transform="translate(642 96)"><rect width="166" height="129" fill="#21183d" stroke="#ffe16a" stroke-width="2"/><text x="83" y="42" fill="#ffe16a" font-size="13">04</text><text x="83" y="68" fill="#fff0df" font-size="14">OPEN A PR</text><text x="83" y="94" fill="#bba8d4" font-family="Arial,sans-serif" font-size="12">创建合并请求</text><text x="83" y="116" fill="#bba8d4" font-size="10">explain + show checks</text></g>
+    <g transform="translate(844 96)"><rect width="166" height="129" fill="#21183d" stroke="#8065ae" stroke-width="2"/><text x="83" y="42" fill="#ff78bc" font-size="13">05</text><text x="83" y="68" fill="#fff0df" font-size="14">REVIEW</text><text x="83" y="94" fill="#bba8d4" font-family="Arial,sans-serif" font-size="12">组员互相检查</text><text x="83" y="116" fill="#bba8d4" font-size="10">check page + assets</text></g>
+    <g transform="translate(1046 96)"><rect width="118" height="129" fill="#291c3e" stroke="#ff78bc" stroke-width="2"/><text x="59" y="42" fill="#ffe16a" font-size="13">06</text><text x="59" y="68" fill="#fff0df" font-size="14">MERGE</text><text x="59" y="94" fill="#bba8d4" font-family="Arial,sans-serif" font-size="12">合并到</text><text x="59" y="116" fill="#ff78bc" font-size="13">main</text></g>
+  </g>
+  <g fill="none" stroke="#a283c8" stroke-width="3"><path d="M207 160h24m-8-8 8 8-8 8M409 160h24m-8-8 8 8-8 8M611 160h24m-8-8 8 8-8 8M813 160h24m-8-8 8 8-8 8M1015 160h24m-8-8 8 8-8 8"/></g>
+  <text x="600" y="270" fill="#bba8d4" font-family="Arial,sans-serif" text-anchor="middle" font-size="13">main 始终保持可运行；所有新功能先在个人分支完成，再通过 Pull Request 审查。</text>
+</svg>

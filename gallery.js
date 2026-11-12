@@ -1,0 +1,10 @@
+const extraFriends=[
+  {id:'bunny',name:'Clover',kind:'BUNNY',role:'A soft, sleepy hum',asset:'bunny',sampleId:'bunny',base:329.63,theme:'moon'},
+  {id:'frog',name:'Mallow',kind:'FROG',role:'A bouncy little boop',asset:'frog',sampleId:'frog',base:440,theme:'moss'},
+  {id:'fox',name:'Peach',kind:'FOX',role:'A curious high note',asset:'fox',sampleId:'fox',base:587.33,theme:'peach'}
+];
+const friends=[...WERStore.starters.map(p=>({...p,kind:'CAT',voice:p.role,character:p.emoji})),...extraFriends.map(p=>({...p,voice:p.role,character:'✦'}))];
+const gallery=document.querySelector('#gallery');let sampleAudio;window.petGallerySvg=id=>window.spriteSvg(friends.find(p=>p.id===id));
+const kindZh={CAT:'猫咪',BUNNY:'兔子',FROG:'青蛙',FOX:'狐狸'};
+gallery.innerHTML=friends.map((p,i)=>`<article class="friend-card"><div class="friend-art"><span class="friend-number">LITTLE FRIEND 0${i+1} · 小伙伴</span><img src="assets/pets/${p.asset||p.id}.png" alt="Pixel ${p.kind.toLowerCase()}" onerror="this.outerHTML=window.petGallerySvg('${p.id}')"></div><div class="friend-detail"><div class="friend-title"><h3>${p.name}</h3><span>${p.kind} · ${kindZh[p.kind]}</span></div><p>${p.voice}<small class="zh-voice">原创合成音色 · ${p.name}</small></p><div class="note-chip"><b>♪</b><span>Original synth voice · ${Math.round(p.base)} Hz starting tone<br>原创合成音 · 基础音高约 ${Math.round(p.base)} Hz</span></div><div class="friend-actions"><button data-preview="${p.id}" aria-label="Play ${p.name}'s sample sound">♫</button><a href="studio.html?pet=${encodeURIComponent(p.id)}">Invite to studio · 邀请加入 ↗</a></div><a class="download-link" href="assets/sounds/${p.sampleId||p.id}-call.wav" download>Download sample · 下载声音示例 ↓</a></div></article>`).join('');
+gallery.addEventListener('click',async e=>{const b=e.target.closest('[data-preview]');if(!b)return;sampleAudio?.pause();const pet=friends.find(p=>p.id===b.dataset.preview);sampleAudio=new Audio(`assets/sounds/${pet.sampleId||pet.id}-call.wav`);sampleAudio.volume=.65;b.classList.add('playing');sampleAudio.onended=()=>b.classList.remove('playing');try{await sampleAudio.play()}catch{b.classList.remove('playing')}});
