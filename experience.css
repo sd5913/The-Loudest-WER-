@@ -95,6 +95,11 @@ body[data-time="sunset"] .room-pet-art.sunset-art, body[data-time="night"] .room
 .pixel-preview p { position:absolute; bottom:5px; margin:0; color:#c4b3da; font-size:9px; text-align:center; }
 .pixel-preview small, .pet-form small { display:block; margin-top:5px; color:#a997c0; font-size:9px; }
 .pet-form { display:grid; gap:14px; }
+.pixel-controls { display:grid; gap:8px; padding:12px; border:1px solid #8065ae; background:#211832; color:#ffbde8; font:10px 'Courier New',monospace; }
+.pixel-controls label { display:flex; justify-content:space-between; gap:8px; }
+.pixel-controls output { color:#ffe16a; }
+.pixel-controls input { width:100%; accent-color:#e480d3; }
+.pixel-controls select { color:#fff1dc; background:#21183a; border:1px solid #8065ae; padding:8px; }
 .pet-form > label { display:grid; gap:7px; color:#ffbde8; font:10px 'Courier New',monospace; }
 .pet-form input[type="text"], .pet-form input:not([type]) { padding:11px; color:#fff1dc; border:1px solid #8065ae; background:#21183a; box-shadow:inset 2px 2px #100c20; }
 .file-drop { padding:12px; border:1px dashed #9a77c4; background:#211832; }

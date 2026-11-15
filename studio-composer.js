@@ -1,7 +1,7 @@
 // Each phrase has 16 visible cells; longer songs use a second editable phrase.
 let composerMode='rhythm', meter='4/4', musicKey='C', songLength=1, phrasePage=0;
-let chordEnabled=false, chordPattern=['C','G','Am','F'];
-let audioAnalyser=null, waveFrame=0;
+let chordEnabled=false, chordPattern=['C','Am','F','G'];
+let audioAnalyser=null, masterGain=null, waveFrame=0;
 const keyOffsets={C:0,G:7,F:5,Am:9};
 const majorScale=[0,-1,-3,-5,-7,-8,-10,-12,-13],minorScale=[0,-2,-4,-5,-7,-9,-10,-12,-14];
 const noteNames={C:['C5','B4','A4','G4','F4','E4','D4','C4','B3'],G:['G5','F#5','E5','D5','C5','B4','A4','G4','F#4'],F:['F5','E5','D5','C5','Bb4','A4','G4','F4','E4'],Am:['A5','G5','F5','E5','D5','C5','B4','A4','G4']};
@@ -21,7 +21,15 @@ function ensureAnalyser(){
  audioAnalyser=context.createAnalyser();
  audioAnalyser.fftSize=256;
  audioAnalyser.smoothingTimeConstant=.72;
- audioAnalyser.connect(context.destination);
+ const limiter=context.createDynamicsCompressor();
+ limiter.threshold.value=-18;
+ limiter.knee.value=12;
+ limiter.ratio.value=4;
+ limiter.attack.value=.003;
+ limiter.release.value=.2;
+ masterGain=context.createGain();
+ masterGain.gain.value=Number(document.querySelector('#masterVolume').value)/100;
+ audioAnalyser.connect(limiter).connect(masterGain).connect(context.destination);
 }
 function drawWave(){
  const canvas=document.querySelector('#waveform');
@@ -55,7 +63,7 @@ function renderComposer(){
  document.querySelector('#meter').value=meter;
  document.querySelector('#musicKey').value=musicKey;
  document.querySelector('#songLength').value=String(songLength);
- document.querySelector('#lengthHint').textContent=`${stepCount()} beats · ${stepCount()} 拍`;
+ document.querySelector('#lengthHint').textContent=`${stepCount()/ (meter==='3/4'?3:4)} bars · ${stepCount()/ (meter==='3/4'?3:4)} 小节 · ${stepCount()} beats`;
  document.querySelector('#phraseNav').hidden=songLength===1;
  document.querySelectorAll('[data-phrase-page]').forEach(button=>{const active=Number(button.dataset.phrasePage)===phrasePage;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active))});
  document.querySelector('#chordLoop').checked=chordEnabled;
@@ -64,7 +72,7 @@ function renderComposer(){
  const notes=p.notes||{};
  document.querySelector('#melodyGrid').innerHTML=noteNames[musicKey].map((name,row)=>
   `<div class="note-name">${name}</div>`+
-  Array.from({length:16},(_,i)=>{const step=pageStart()+i;return `<button type="button" class="note-cell ${notes[step]===row&&p.steps.includes(step)?'on':''} ${step>=stepCount()?'outside-meter':''} ${playing&&step===beat?'current':''}" data-note-step="${step}" data-note-row="${row}" aria-label="${p.name} ${name} beat ${step+1}" aria-pressed="${notes[step]===row&&p.steps.includes(step)}" ${step>=stepCount()?'disabled':''}></button>`}).join('')
+  Array.from({length:16},(_,i)=>{const step=pageStart()+i,base=step%clipPatternSteps(p);return `<button type="button" class="note-cell ${notes[base]===row&&effectiveSteps(p).includes(step)?'on':''} ${step>=stepCount()?'outside-meter':''} ${playing&&step===beat?'current':''}" data-note-step="${step}" data-note-row="${row}" aria-label="${p.name} ${name} beat ${step+1}" aria-pressed="${notes[base]===row&&effectiveSteps(p).includes(step)}" ${step>=stepCount()?'disabled':''}></button>`}).join('')
  ).join('');
  document.querySelector('#chordSlots').innerHTML=chordPattern.slice(0,stepCount()/4).map((chord,i)=>
   `<button type="button" class="chord-slot ${playing&&Math.floor(beat/4)===i?'current':''}" data-chord-slot="${i}" aria-label="Beat ${i+1}: ${chord==='—'?'No chord':chordLabels[musicKey][chord]}. Click to change."><small>BEAT ${i+1}</small><b>${chord==='—'?'—':chordLabels[musicKey][chord]}</b><span>${chord==='—'?'Silent · 静音':'Click to change · 点击切换'}</span></button>`
@@ -79,7 +87,7 @@ function playChord(step,time){
  const chord=chordPattern[Math.floor(step/4)];
  if(!chord||chord==='—')return;
  const offset=musicKey==='Am'?0:keyOffsets[musicKey]||0,root=130.8128;
- const tones=musicKey==='Am'?({C:[9,12,16],G:[4,7,11],Am:[5,9,12],F:[2,5,9]})[chord]:chordDegrees[chord];
+ const tones=chordDegrees[chord];
  tones.forEach((semitones,index)=>{
   const osc=context.createOscillator(),gain=context.createGain();
   osc.type='sine';osc.frequency.setValueAtTime(root*2**((semitones+offset)/12),time);
@@ -107,7 +115,7 @@ document.querySelector('#musicKey').addEventListener('change',e=>{musicKey=e.tar
 document.querySelector('#chordLoop').addEventListener('change',e=>{chordEnabled=e.target.checked;renderComposer()});
 document.querySelector('#melodyGrid').addEventListener('click',e=>{
  const cell=e.target.closest('[data-note-step]');if(!cell)return;
- const p=pets.find(p=>p.id===selected),step=Number(cell.dataset.noteStep),row=Number(cell.dataset.noteRow);
+ const p=pets.find(p=>p.id===selected),step=Number(cell.dataset.noteStep)%clipPatternSteps(p),row=Number(cell.dataset.noteRow);
  p.notes||={};
  if(p.notes[step]===row&&p.steps.includes(step)){delete p.notes[step];p.steps=p.steps.filter(s=>s!==step)}
  else{p.notes[step]=row;if(!p.steps.includes(step))p.steps.push(step);p.steps.sort((a,b)=>a-b);context ||= new(window.AudioContext||window.webkitAudioContext)();context.resume().then(()=>sound(p,0,noteOffset(row,p)))}
@@ -120,7 +128,13 @@ document.querySelector('#chordSlots').addEventListener('click',e=>{
  renderComposer();
 });
 document.querySelector('#chordPreset').addEventListener('change',e=>{
- const pattern=({pop:['C','G','Am','F'],dream:['Am','F','C','G'],bright:['C','F','G','C']})[e.target.value];
+ const pattern=({beginner:['C','Am','F','G'],pop:['C','G','Am','F'],dream:['Am','F','C','G'],bright:['C','F','G','C']})[e.target.value];
  chordPattern=Array.from({length:stepCount()/4},(_,i)=>pattern[i%pattern.length]);
  chordEnabled=true;renderComposer();
+});
+document.querySelector('#beginnerChords').addEventListener('click',()=>{
+ document.querySelector('#chordPreset').value='beginner';
+ document.querySelector('#chordPreset').dispatchEvent(new Event('change'));
+ composerMode='chords';renderComposer();
+ notify('C–Am–F–G is ready · 四和弦已加入合奏');
 });
