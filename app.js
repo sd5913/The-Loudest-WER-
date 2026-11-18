@@ -419,15 +419,17 @@ document.querySelector('#generateAiSample').addEventListener('click',async()=>{
  const button=document.querySelector('#generateAiSample'),status=document.querySelector('#aiSampleStatus');
  const useButton=document.querySelector('#useAiSample');
  const idea=document.querySelector('#aiSoundPrompt').value.trim();
+ const speech=document.querySelector('#aiSampleType').value==='speech';
  if(!idea){status.textContent='Describe a sound first · 先描述你想要的声音';return}
  pendingAiSample=null;useButton.hidden=true;
  button.disabled=true;status.textContent='Generating a short sample… · 正在生成短音频…';
  try{
-  const response=await fetch('/api/generate-sample',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:idea})});
+  const response=await fetch(speech?'/api/generate-speech':'/api/generate-sample',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:idea})});
   if(!response.ok)throw new Error(response.status===503?'API key is not configured · API 密钥尚未配置':'Generation unavailable · 暂时无法生成');
   context ||= new(window.AudioContext||window.webkitAudioContext)();
   await context.resume();
   const buffer=await context.decodeAudioData(await response.arrayBuffer());
+  if(buffer.duration>12)throw new Error('Keep speech under 12 seconds ? ??????????12???');
   pendingAiSample=buffer;
   const preview=context.createBufferSource();preview.buffer=buffer;preview.connect(context.destination);preview.start();
   useButton.hidden=false;
