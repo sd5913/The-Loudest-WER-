@@ -19,10 +19,10 @@ async function loadInstrumentSamples(){
    if(!response.ok)throw new Error('Missing instrument audio');
    instrumentBuffers.set(instrument.id,await context.decodeAudioData(await response.arrayBuffer()));
   }catch(error){console.warn('Instrument sample unavailable:',instrument.id,error)}
- }));
+ })).then(refreshTransport);
  return instrumentLoad;
 }
-function playInstrument(p,time,noteOffset=0){
+function playInstrument(p,time,noteOffset,stepAudio){
  const instrument=instruments.find(item=>item.id===(p.instrument||'piano'));
  const buffer=instrumentBuffers.get(instrument?.id);
  if(!instrument||!buffer||!context)return false;
@@ -38,9 +38,8 @@ function playInstrument(p,time,noteOffset=0){
  gain.gain.linearRampToValueAtTime(volume,time+.012);
  const duration=Math.min(buffer.duration/rate,1.2);
  gain.gain.exponentialRampToValueAtTime(.0001,time+Math.max(.06,duration));
- source.connect(filter).connect(gain);connectOutput(gain,p);
- source.start(time);source.stop(time+duration+.02);
- animate(p.id);
+ source.connect(filter).connect(gain);
+ startVoice(source,gain,p,time,time+duration+.02,null,stepAudio);
  return true;
 }
 function renderInstrumentPicker(p){
@@ -59,7 +58,7 @@ function renderInstrumentPicker(p){
 }
 document.querySelector('#sourceInstrument').addEventListener('click',async()=>{
  const p=pets.find(item=>item.id===selected);
- p.source='instrument';p.instrument||='piano';render();
+ p.source='instrument';p.instrument||='piano';refreshTransport();render();
  context ||= new(window.AudioContext||window.webkitAudioContext)();
  await context.resume();await loadInstrumentSamples();sound(p);
 });
@@ -71,7 +70,7 @@ document.querySelector('#instrumentFilters').addEventListener('click',e=>{
 document.querySelector('#instrumentGrid').addEventListener('click',async e=>{
  const button=e.target.closest('[data-instrument]');if(!button)return;
  const p=pets.find(item=>item.id===selected);
- p.source='instrument';p.instrument=button.dataset.instrument;render();
+ p.source='instrument';p.instrument=button.dataset.instrument;refreshTransport();render();
  context ||= new(window.AudioContext||window.webkitAudioContext)();
  await context.resume();await loadInstrumentSamples();sound(p);
 });

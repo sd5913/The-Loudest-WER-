@@ -82,7 +82,7 @@ function updateComposerPlayhead(){
  document.querySelectorAll('.note-cell').forEach(el=>el.classList.toggle('current',playing&&Number(el.dataset.noteStep)===beat));
  document.querySelectorAll('.chord-slot').forEach(el=>el.classList.toggle('current',playing&&Number(el.dataset.chordSlot)===Math.floor(beat/4)));
 }
-function playChord(step,time){
+function playChord(step,time,stepAudio){
  if(!chordEnabled||step%4||!context)return;
  const chord=chordPattern[Math.floor(step/4)];
  if(!chord||chord==='—')return;
@@ -94,8 +94,8 @@ function playChord(step,time){
   gain.gain.setValueAtTime(.0001,time);
   gain.gain.linearRampToValueAtTime(index===0?.024:.013,time+.025);
   gain.gain.exponentialRampToValueAtTime(.0001,time+Math.min(.75,240/(Number(document.querySelector('#tempo').value)||92)*.7));
-  osc.connect(gain);connectOutput(gain,{echo:0});
-  osc.start(time);osc.stop(time+1);
+  osc.connect(gain);
+  startVoice(osc,gain,{echo:0},time,time+1,null,stepAudio);
  });
 }
 function getComposerSaveState(){return {meter,musicKey,songLength,chordEnabled,chordPattern:[...chordPattern]}}
@@ -108,29 +108,29 @@ function loadComposerState(song){
  while(chordPattern.length<stepCount()/4)chordPattern.push(chordPattern[chordPattern.length%4]||'C');
 }
 document.querySelectorAll('[data-compose-mode]').forEach(button=>button.addEventListener('click',()=>{composerMode=button.dataset.composeMode;renderComposer()}));
-document.querySelector('#songLength').addEventListener('change',e=>{songLength=Number(e.target.value)===2?2:1;phrasePage=0;while(chordPattern.length<stepCount()/4)chordPattern.push(chordPattern[chordPattern.length%4]||'C');beat=-1;if(playing)startTime=performance.now();render()});
+document.querySelector('#songLength').addEventListener('change',e=>{songLength=Number(e.target.value)===2?2:1;phrasePage=0;while(chordPattern.length<stepCount()/4)chordPattern.push(chordPattern[chordPattern.length%4]||'C');resetTransport();render()});
 document.querySelector('#phraseNav').addEventListener('click',e=>{const button=e.target.closest('[data-phrase-page]');if(!button)return;phrasePage=Number(button.dataset.phrasePage);render()});
-document.querySelector('#meter').addEventListener('change',e=>{meter=e.target.value;beat=-1;if(playing)startTime=performance.now();render();});
-document.querySelector('#musicKey').addEventListener('change',e=>{musicKey=e.target.value;renderComposer()});
-document.querySelector('#chordLoop').addEventListener('change',e=>{chordEnabled=e.target.checked;renderComposer()});
+document.querySelector('#meter').addEventListener('change',e=>{meter=e.target.value;resetTransport();render();});
+document.querySelector('#musicKey').addEventListener('change',e=>{musicKey=e.target.value;refreshTransport();renderComposer()});
+document.querySelector('#chordLoop').addEventListener('change',e=>{chordEnabled=e.target.checked;refreshTransport();renderComposer()});
 document.querySelector('#melodyGrid').addEventListener('click',e=>{
  const cell=e.target.closest('[data-note-step]');if(!cell)return;
  const p=pets.find(p=>p.id===selected),step=Number(cell.dataset.noteStep)%clipPatternSteps(p),row=Number(cell.dataset.noteRow);
  p.notes||={};
  if(p.notes[step]===row&&p.steps.includes(step)){delete p.notes[step];p.steps=p.steps.filter(s=>s!==step)}
  else{p.notes[step]=row;if(!p.steps.includes(step))p.steps.push(step);p.steps.sort((a,b)=>a-b);context ||= new(window.AudioContext||window.webkitAudioContext)();context.resume().then(()=>sound(p,0,noteOffset(row,p)))}
- render();
+ refreshTransport();render();
 });
 document.querySelector('#chordSlots').addEventListener('click',e=>{
  const slot=e.target.closest('[data-chord-slot]');if(!slot)return;
  const i=Number(slot.dataset.chordSlot);
  chordPattern[i]=chordChoices[(chordChoices.indexOf(chordPattern[i])+1)%chordChoices.length];
- renderComposer();
+ refreshTransport();renderComposer();
 });
 document.querySelector('#chordPreset').addEventListener('change',e=>{
  const pattern=({beginner:['C','Am','F','G'],pop:['C','G','Am','F'],dream:['Am','F','C','G'],bright:['C','F','G','C']})[e.target.value];
  chordPattern=Array.from({length:stepCount()/4},(_,i)=>pattern[i%pattern.length]);
- chordEnabled=true;renderComposer();
+ chordEnabled=true;refreshTransport();renderComposer();
 });
 document.querySelector('#beginnerChords').addEventListener('click',()=>{
  document.querySelector('#chordPreset').value='beginner';

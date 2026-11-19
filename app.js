@@ -16,7 +16,9 @@ const templates = [
 let pets=petTypes.slice(0,3).map((p,i)=>({...p,volume:[62,55,48][i],pitch:0,tone:'sample',clipStart:0,clipEnd:i===2?.36:1,strength:70,echo:0,repeat:'loop',muted:false,steps:templates[0].steps[p.id].slice()}));
 let loopPlayback=true;
 let aiSongData='',aiSongRange={start:0,end:0},aiSongVolume=70;
-let selected=pets[0].id, focusBeat=0, playing=false, context=null, timer=null, beat=0, loop=0, startTime=0, toastTimer;
+let selected=pets[0].id, focusBeat=0, playing=false, context=null, beat=-1, toastTimer;
+let transport=null, transportTimer=null, transportFrame=0, sequenceOutput=null, previewOutput=null;
+let starting=false, playRequest=0;
 let positioning=false, positionDraft={}, activeDrag=null;
 let recording=null;
 const starterStagePositions={cat:{x:76,y:61},'ghost-cat':{x:50,y:55},'bat-cat':{x:24,y:61}};
@@ -62,7 +64,7 @@ function useCustomVoice(p,buffer,name){
  p.customVoiceName=name;p.tone='custom';p.source='voice';
  p.clipStart=0;p.clipEnd=1;
  if(!p.steps.length)p.steps=[0,4,8,12];
- scheduleDraftSave();
+ refreshTransport();scheduleDraftSave();
 }let sampleLoad=null,singingLoad=null,singingBuffer=null,samplesReady=false;
 function audioBufferData(buffer){
  const samples=buffer.length,bytes=new ArrayBuffer(44+samples*2),view=new DataView(bytes);
@@ -92,7 +94,9 @@ async function loadSamples(){
  const Decoder=window.OfflineAudioContext||window.webkitOfflineAudioContext;
  const decoder=context||(Decoder?new Decoder(1,1,44100):new(window.AudioContext||window.webkitAudioContext)());
  if(!sampleLoad)sampleLoad=(async()=>{for(const p of [...pets,...petTypes]){const sample=p.sampleId||p.id;if(!p.custom&&!sampleBuffers.has(p.id)){try{const response=await fetch(`assets/sounds/${p.sampleFile||sample+"-call.wav"}?v=3`);if(response.ok)sampleBuffers.set(p.id,await decoder.decodeAudioData(await response.arrayBuffer()))}catch{}}if((p.customAudioData||p.audioData)&&!customBuffers.has(p.id)){try{const raw=atob((p.customAudioData||p.audioData).split(',').pop()),bytes=Uint8Array.from(raw,c=>c.charCodeAt(0));customBuffers.set(p.id,await decoder.decodeAudioData(bytes.buffer));p.tone='custom'}catch{}}}})();
- await sampleLoad;await loadSingingMeow(decoder);samplesReady=true;if(context&&pets.some(p=>p.source==='instrument'))await loadInstrumentSamples();renderClipUI();
+ await sampleLoad;await loadSingingMeow(decoder);
+ if(!samplesReady){samplesReady=true;refreshTransport()}
+ if(context&&pets.some(p=>p.source==='instrument'))await loadInstrumentSamples();renderClipUI();
 }
 async function loadSingingMeow(decoder=context){if(!singingLoad)singingLoad=fetch('assets/sounds/pet-singing-meow.wav?v=1').then(async response=>{if(response.ok)singingBuffer=await decoder.decodeAudioData(await response.arrayBuffer())}).catch(()=>{});await singingLoad}
 const requestedPet=new URLSearchParams(location.search).get('pet');if(requestedPet){const friend=petTypes.find(p=>p.id===requestedPet);if(friend){if(!pets.some(p=>p.id===friend.id))pets.push({...friend,volume:50,pitch:0,tone:friend.audioData?'custom':'signature',strength:70,echo:0,repeat:'loop',muted:false,steps:[0,8]});selected=friend.id;}}
@@ -169,8 +173,32 @@ function restoreSession(saved){
 }
 if(incomingSong){const saved=WERStore.getSongs().find(song=>song.id===incomingSong);if(saved)restoreSession(saved)}
 const digitalCurve=Float32Array.from({length:512},(_,i)=>{const x=i*2/511-1;return Math.tanh(x*4)*.82});
-function connectOutput(gain,p){ensureAnalyser();gain.connect(audioAnalyser);if((p.echo||0)>0){const delay=context.createDelay(.6),feedback=context.createGain(),wet=context.createGain();delay.delayTime.value=.23;feedback.gain.value=.18;wet.gain.value=(p.echo||0)/100*.35;gain.connect(delay);delay.connect(wet).connect(audioAnalyser);delay.connect(feedback).connect(delay)}}
-function playSynthClip(p,t,rate){
+function createOutputBus(destination){
+ const bus=context.createGain();
+ bus.connect(destination);
+ return bus;
+}
+function connectOutput(gain,p,stepAudio){
+ ensureAnalyser();
+ const output=stepAudio
+  ? (stepAudio.output ||= createOutputBus(sequenceOutput))
+  : (previewOutput ||= createOutputBus(audioAnalyser));
+ gain.connect(output);
+ if((p.echo||0)>0){
+  const delay=context.createDelay(.6),feedback=context.createGain(),wet=context.createGain();
+  delay.delayTime.value=.23;feedback.gain.value=.18;wet.gain.value=(p.echo||0)/100*.35;
+  gain.connect(delay);delay.connect(wet).connect(output);delay.connect(feedback).connect(delay);
+ }
+}
+function startVoice(source,gain,p,time,end,range,stepAudio){
+ connectOutput(gain,p,stepAudio);
+ if(range)source.start(time,range.start,range.duration);
+ else source.start(time);
+ source.stop(end);
+ if(stepAudio)stepAudio.sources.push(source);
+ else animate(p.id);
+}
+function playSynthClip(p,t,rate,stepAudio){
  const buffer=clipBufferFor(p);if(!buffer)return false;
  const source=context.createBufferSource(),gain=context.createGain(),range=clipRange(p,buffer);
  const duration=range.duration/rate,fade=Math.min(.045,duration*.4);
@@ -178,10 +206,15 @@ function playSynthClip(p,t,rate){
  source.buffer=buffer;source.playbackRate.setValueAtTime(rate,t);
  gain.gain.setValueAtTime(.0001,t);gain.gain.linearRampToValueAtTime(level,t+Math.min(.018,duration*.22));
  gain.gain.setValueAtTime(level,t+Math.max(.018,duration-fade));gain.gain.linearRampToValueAtTime(0,t+duration);
- source.connect(gain);connectOutput(gain,p);
- source.start(t,range.start,range.duration);source.stop(t+duration+.01);animate(p.id);return true;
+ source.connect(gain);
+ startVoice(source,gain,p,t,t+duration+.01,range,stepAudio);
+ return true;
 }
-function sound(p,time=0,noteOffset=0){if(!context||context.state==='closed')return;const t=Math.max(context.currentTime+.005,time),rate=2**((p.pitch+noteOffset)/12);if(p.source==='instrument'&&playInstrument(p,t,noteOffset))return;if(p.tone==='custom'&&customBuffers.has(p.id)){const source=context.createBufferSource(),high=context.createBiquadFilter(),shape=context.createWaveShaper(),low=context.createBiquadFilter(),gain=context.createGain();source.buffer=customBuffers.get(p.id);source.playbackRate.setValueAtTime(rate,t);high.type='highpass';high.frequency.setValueAtTime(170,t);shape.curve=digitalCurve;shape.oversample='2x';low.type='lowpass';low.frequency.setValueAtTime(2800,t);const range=clipRange(p,source.buffer),duration=range.duration/rate,level=Math.max(.001,p.volume/100*.24*(customLevels.get(p.id)||1)*((p.strength??70)/100*.7+.3)),attack=Math.min(.018,duration*.22),fade=Math.min(.045,duration*.4);gain.gain.setValueAtTime(.0001,t);gain.gain.linearRampToValueAtTime(level,t+attack);gain.gain.setValueAtTime(level,t+Math.max(attack,duration-fade));gain.gain.linearRampToValueAtTime(0,t+duration);source.connect(high).connect(shape).connect(low).connect(gain);connectOutput(gain,p);source.start(t,range.start,range.duration);source.stop(t+duration+.01);animate(p.id);return}if(p.tone==='meow'&&singingBuffer){
+function sound(p,time=0,noteOffset=0,stepAudio=null){
+ if(context?.state!=='running')return;
+ const t=stepAudio?time:Math.max(context.currentTime+.005,time),rate=2**((p.pitch+noteOffset)/12);
+ if(p.source==='instrument'&&playInstrument(p,t,noteOffset,stepAudio))return;
+ if(p.tone==='custom'&&customBuffers.has(p.id)){const source=context.createBufferSource(),high=context.createBiquadFilter(),shape=context.createWaveShaper(),low=context.createBiquadFilter(),gain=context.createGain();source.buffer=customBuffers.get(p.id);source.playbackRate.setValueAtTime(rate,t);high.type='highpass';high.frequency.setValueAtTime(170,t);shape.curve=digitalCurve;shape.oversample='2x';low.type='lowpass';low.frequency.setValueAtTime(2800,t);const range=clipRange(p,source.buffer),duration=range.duration/rate,level=Math.max(.001,p.volume/100*.24*(customLevels.get(p.id)||1)*((p.strength??70)/100*.7+.3)),attack=Math.min(.018,duration*.22),fade=Math.min(.045,duration*.4);gain.gain.setValueAtTime(.0001,t);gain.gain.linearRampToValueAtTime(level,t+attack);gain.gain.setValueAtTime(level,t+Math.max(attack,duration-fade));gain.gain.linearRampToValueAtTime(0,t+duration);source.connect(high).connect(shape).connect(low).connect(gain);startVoice(source,gain,p,t,t+duration+.01,range,stepAudio);return}if(p.tone==='meow'&&singingBuffer){
  const source=context.createBufferSource(),filter=context.createBiquadFilter(),gain=context.createGain();
  source.buffer=singingBuffer;
  const target=(p.base||440)*rate*2,singingRate=Math.max(.5,Math.min(4,target/520));
@@ -191,7 +224,7 @@ function sound(p,time=0,noteOffset=0){if(!context||context.state==='closed')retu
  gain.gain.setValueAtTime(.0001,t);gain.gain.linearRampToValueAtTime(volume,t+.022);
  gain.gain.setValueAtTime(volume*.85,t+Math.min(.14,duration*.5));
  gain.gain.setValueAtTime(volume*.85,t+Math.max(.022,duration-.045));gain.gain.linearRampToValueAtTime(0,t+duration);
- source.connect(filter).connect(gain);connectOutput(gain,p);source.start(t,range.start,range.duration);source.stop(t+duration+.01);animate(p.id);return
+ source.connect(filter).connect(gain);startVoice(source,gain,p,t,t+duration+.01,range,stepAudio);return
  }if(p.tone==='sample'&&sampleBuffers.has(p.id)){
  const source=context.createBufferSource(),gain=context.createGain(),filter=context.createBiquadFilter();
  source.buffer=sampleBuffers.get(p.id);source.playbackRate.setValueAtTime(rate,t);
@@ -202,11 +235,11 @@ function sound(p,time=0,noteOffset=0){if(!context||context.state==='closed')retu
  gain.gain.linearRampToValueAtTime(volume,t+Math.min(.035,duration*.25));
  gain.gain.setValueAtTime(volume*.82,t+Math.max(Math.min(.035,duration*.25),duration-Math.min(.05,duration*.4)));
  gain.gain.linearRampToValueAtTime(0,t+duration);
- source.connect(filter).connect(gain);connectOutput(gain,p);
- source.start(t,range.start,range.duration);source.stop(t+duration+.01);animate(p.id);return
+ source.connect(filter).connect(gain);startVoice(source,gain,p,t,t+duration+.01,range,stepAudio);return
  }
- if(playSynthClip(p,t,rate))return;
- const freq=p.base*rate,gain=context.createGain(),osc=context.createOscillator(),filter=context.createBiquadFilter();osc.type=p.tone==='soft'?'sine':p.tone==='bright'||p.tone==='robot'?'square':p.wave;osc.frequency.setValueAtTime(freq,t);filter.type='lowpass';filter.frequency.setValueAtTime(p.tone==='soft'?900:p.tone==='bright'?3200:p.tone==='robot'?1100:p.id==='dog'?950:2500,t);const vol=(p.volume/100)*.11*((p.strength??70)/100*.7+.3);gain.gain.setValueAtTime(.0001,t);gain.gain.exponentialRampToValueAtTime(Math.max(.001,vol),t+.018);gain.gain.exponentialRampToValueAtTime(.0001,t+(p.id==='bird'?.13:.2));osc.connect(filter).connect(gain);connectOutput(gain,p);osc.start(t);osc.stop(t+.22);animate(p.id)}
+ if(playSynthClip(p,t,rate,stepAudio))return;
+ const freq=p.base*rate,gain=context.createGain(),osc=context.createOscillator(),filter=context.createBiquadFilter();osc.type=p.tone==='soft'?'sine':p.tone==='bright'||p.tone==='robot'?'square':p.wave;osc.frequency.setValueAtTime(freq,t);filter.type='lowpass';filter.frequency.setValueAtTime(p.tone==='soft'?900:p.tone==='bright'?3200:p.tone==='robot'?1100:p.id==='dog'?950:2500,t);const vol=(p.volume/100)*.11*((p.strength??70)/100*.7+.3);gain.gain.setValueAtTime(.0001,t);gain.gain.exponentialRampToValueAtTime(Math.max(.001,vol),t+.018);gain.gain.exponentialRampToValueAtTime(.0001,t+(p.id==='bird'?.13:.2));osc.connect(filter).connect(gain);startVoice(osc,gain,p,t,t+.22,null,stepAudio)
+}
 const animationAsset={cat:'gray-cat','ghost-cat':'dachshund','bat-cat':'samoyed',hamster:'hamster','sea-otter':'sea-otter'};
 const animationFrames=new Map();
 const animationImages=new Map();
@@ -235,10 +268,112 @@ function animate(id){
 preloadAnimationFrames();
 setInterval(()=>{if(playing)pets.forEach(p=>{if(!p.muted)advancePetFrame(p.id)})},240);
 function timeLabel(seconds){const n=Math.floor(seconds);return `${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`}
-function updateTimeDisplay(){const bpm=Number($('#tempo').value)||92;const duration=stepCount()*60/bpm;const elapsed=playing?((performance.now()-startTime)/1000)%duration:0;$('#timeDisplay').textContent=`${timeLabel(elapsed)} / ${timeLabel(Math.ceil(duration))}`}
+function studioTempo(){return clamp(Number($('#tempo').value)||92,60,160)}
+function updateTimeDisplay(elapsed=transport?.position(context.currentTime).elapsed||0){
+ const duration=stepCount()*60/studioTempo();
+ const display=$('#timeDisplay'),label=timeLabel(elapsed)+' / '+timeLabel(Math.ceil(duration));
+ if(display.textContent!==label)display.textContent=label;
+}
 function updateBeatUI(){const loopBeat=Math.floor(beat/4);$('#beatLights').querySelectorAll('i').forEach((el,i)=>el.classList.toggle('on',playing&&i===loopBeat));$('#rhythm').querySelectorAll('[data-step]').forEach(el=>el.classList.toggle('current',playing&&Number(el.dataset.step)===beat));$$('.track-steps [data-step]').forEach(el=>el.classList.toggle('current',playing&&Number(el.dataset.step)===beat))}
-function tick(){if(!playing)return;const ms=60000/Number($('#tempo').value||92),count=stepCount();const elapsed=performance.now()-startTime;if(!loopPlayback&&elapsed>=ms*count){playing=false;clearTimeout(timer);stopWave();pauseAiSong();beat=-1;render();notify('Phrase finished · 小段播放结束');return}const step=Math.floor(elapsed/ms)%count,nowLoop=Math.floor(elapsed/(ms*count));loop=nowLoop;updateTimeDisplay();if(step!==beat){beat=step;const nextPage=Math.floor(step/phraseSteps());if(nextPage!==phrasePage){phrasePage=nextPage;render()}const at=context.currentTime+.035;pets.forEach(p=>{const repeatOk=p.repeat==='loop'||(p.repeat==='alternate'?loop%2===0:loop===0);if(!p.muted&&repeatOk&&effectiveSteps(p).includes(step))sound(p,at,melodyOffset(p,step%clipPatternSteps(p)))});playChord(step,at);updateBeatUI();updateComposerPlayhead()}timer=setTimeout(tick,15)}
-async function togglePlay(){if(playing){playing=false;clearTimeout(timer);stopWave();pauseAiSong();if(context&&context.state==='running')await context.suspend();render();return}try{context ||= new(window.AudioContext||window.webkitAudioContext)();await context.resume();await loadSamples();preloadAnimationFrames();playing=true;loop=0;beat=-1;startTime=performance.now();startAiSong();render();setStudioHint('Tap a glowing square to change when a pet plays · 点亮方格，决定宠物在哪一拍发声');startWave();tick()}catch(e){notify('Audio could not start. Try again after a click. · 声音尚未启动，请点击后重试。')}}
+function schedulePetStep(step,loop,time){
+ const stepAudio={output:null,sources:[]},hits=[];
+ for(const p of pets){
+  const repeatOk=p.repeat==='loop'||(p.repeat==='alternate'?loop%2===0:loop===0);
+  if(p.muted||!repeatOk||!effectiveSteps(p).includes(step))continue;
+  sound(p,time,melodyOffset(p,step%clipPatternSteps(p)),stepAudio);
+  hits.push(p.id);
+ }
+ playChord(step,time,stepAudio);
+ return {hits,cancel(){
+  stepAudio.output?.disconnect();
+  for(const source of stepAudio.sources)source.stop(0);
+ }};
+}
+function fillTransport(){
+ if(context?.state==='running')transport?.fill(context.currentTime,schedulePetStep);
+}
+function tickTransport(){
+ if(!playing||context.state!=='running')return;
+ if(transport.position(context.currentTime).finished){finishPlayback();return}
+ fillTransport();
+ transportTimer=setTimeout(tickTransport,20);
+}
+function wakeTransport(){
+ clearTimeout(transportTimer);
+ tickTransport();
+}
+function refreshTransport(){
+ if(!transport)return;
+ transport.update(context.currentTime,60/studioTempo(),stepCount(),loopPlayback);
+ fillTransport();
+}
+function resetTransport(){
+ beat=-1;
+ if(!playing)return;
+ transport?.cancel();
+ sequenceOutput?.disconnect();
+ ensureAnalyser();
+ sequenceOutput=createOutputBus(audioAnalyser);
+ transport=new PetTransport(context.currentTime,60/studioTempo(),stepCount(),loopPlayback);
+ fillTransport();
+ updateBeatUI();updateComposerPlayhead();updateTimeDisplay();
+}
+function drawTransport(){
+ if(!playing)return;
+ if(context.state==='running'){
+  const position=transport.read(context.currentTime);
+  if(position.finished){finishPlayback();return}
+  if(position.step!==beat){
+   beat=position.step;
+   const nextPage=Math.floor(beat/phraseSteps());
+   if(beat>=0&&nextPage!==phrasePage){phrasePage=nextPage;render()}
+   updateBeatUI();updateComposerPlayhead();
+  }
+  for(const id of position.hits)animate(id);
+  updateTimeDisplay(position.elapsed);
+ }
+ transportFrame=requestAnimationFrame(drawTransport);
+}
+function finishPlayback(){
+ stopPlayback(false);
+ notify('Phrase finished · 小段播放结束');
+}
+async function stopPlayback(interruptAudio=true){
+ ++playRequest;starting=false;playing=false;beat=-1;
+ clearTimeout(transportTimer);cancelAnimationFrame(transportFrame);
+ if(interruptAudio){
+  transport?.cancel();
+  sequenceOutput?.disconnect();sequenceOutput=null;
+  previewOutput?.disconnect();previewOutput=null;
+ }
+ transport=null;
+ stopWave();pauseAiSong();render();
+ if(interruptAudio&&context?.state==='running')await context.suspend().catch(()=>{});
+}
+async function togglePlay(){
+ if(playing||starting)return stopPlayback();
+ const request=++playRequest;
+ starting=true;
+ try{
+  context ||= new(window.AudioContext||window.webkitAudioContext)();
+  await context.resume();await loadSamples();
+  if(request!==playRequest)return;
+  preloadAnimationFrames();
+  playing=true;
+  startAiSong();render();
+  setStudioHint('Tap a glowing square to change when a pet plays · 点亮方格，决定宠物在哪一拍发声');
+  startWave();resetTransport();
+  context.addEventListener('statechange',wakeTransport);
+  wakeTransport();
+  transportFrame=requestAnimationFrame(drawTransport);
+ }catch{
+  if(request!==playRequest)return;
+  await stopPlayback();
+  notify('Audio could not start. Try again after a click. · 声音尚未启动，请点击后重试。');
+ }finally{
+  if(request===playRequest)starting=false;
+ }
+}
 function notify(msg){const el=$('#toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2300)}
 function drawScene(){const c=$('#landscape'),x=c.getContext('2d'),scene=$('#sceneSelect').value;x.imageSmoothingEnabled=false;const rect=(a,b,w,h,col)=>{x.fillStyle=col;x.fillRect(a,b,w,h)};const line=(a,b,cx,dy,col)=>{x.strokeStyle=col;x.lineWidth=2;x.beginPath();x.moveTo(a,b);x.lineTo(cx,dy);x.stroke()};if(scene==='cozy'){rect(0,0,640,340,'#21183d');for(let i=0;i<42;i++)rect(i*31%640,i*53%220,2,2,'#ffe16a');rect(65,35,510,213,'#422758');rect(79,47,482,185,'#ab4e91');rect(90,55,460,172,'#301c50');for(let i=0;i<6;i++){rect(112+i*78,249,8,58,'#ef90d6');rect(110+i*78,241,12,12,'#ffe16a')}rect(78,298,486,13,'#dd79d4');rect(116,311,8,24,'#77529b');rect(512,311,8,24,'#77529b');rect(25,215,75,82,'#392656');rect(37,227,51,44,'#60bfd1');rect(548,209,68,87,'#392656');rect(560,221,44,51,'#d878ca');rect(0,335,640,5,'#f59ad7');return}const colors=['#302d53','#464064','#635477','#a46f7b','#d79a84','#efbf96'];let g=x.createLinearGradient(0,0,0,280);g.addColorStop(0,'#423c68');g.addColorStop(.48,'#aa7181');g.addColorStop(1,'#e5a67f');x.fillStyle=g;x.fillRect(0,0,640,340);for(let i=0;i<140;i++){const a=(i*97)%640,b=(i*47)%175;if(i%4===0)rect(a,b,2,2,'#ffe4bf');}x.fillStyle='#f7c789';x.beginPath();x.arc(479,111,46,0,Math.PI*2);x.fill();x.fillStyle='#f5c89930';x.beginPath();x.arc(479,111,65,0,Math.PI*2);x.fill();
  // distant pixel headland
@@ -255,8 +390,12 @@ function drawScene(){const c=$('#landscape'),x=c.getContext('2d'),scene=$('#scen
  for(const [a,b] of [[12,58],[94,73],[184,42],[330,69]]){rect(a,b,43,7,'#e6b6a3');rect(a+8,b-6,19,8,'#e6b6a3');rect(a+24,b-4,12,6,'#e6b6a3');rect(a+6,b+7,31,4,'#ecc4aa')}if(scene==='sunset'){rect(0,213,640,51,'#607d70');for(let i=0;i<22;i++){const a=i*31;rect(a,203+(i*11%21),30,16,'#506d68');rect(a+8,197+(i*7%18),14,20,'#6b806d')}rect(0,260,640,80,'#c39873');rect(0,263,640,4,'#f1c493');for(let i=0;i<6;i++){rect(23+i*108,277,43,4,'#e7c598');rect(44+i*91,295,48,4,'#e7c598')}for(const a of [75,560]){rect(a,178,3,81,'#594c67');rect(a-5,166,13,14,'#ffe29b')}}
 }
 function loadBackground(){const image=$('#sceneArt'),canvas=$('#landscape'),scene=stageScenes[$('#sceneSelect').value]||sharedScenes[0];if(!scene)return;image.classList.remove('loaded');canvas.hidden=false;image.onload=()=>{image.classList.add('loaded');canvas.hidden=true};image.onerror=()=>{image.classList.remove('loaded');canvas.hidden=false};image.alt=`${scene.name} pixel music stage · ${scene.zh}像素音乐舞台`;$('#sceneLabel').textContent=`✦ ${scene.name.toUpperCase()}${scene.zh?` · ${scene.zh}`:''}`;image.src=scene.src;if(image.complete&&image.naturalWidth)image.onload()}
-function applyTemplate(i){currentTemplate=i;const t=templates[i];songLength=1;phrasePage=0;$('#tempo').value=t.tempo;pets.forEach(p=>{p.steps=(t.steps[p.id]||[0,8]).slice();p.clipRepeats=1;p.notes={};p.muted=false});render();setStudioHint('Press Play together to hear this mood · 点击「一起演奏」试听这个模板');notify(`${t.name} is ready · ${t.name} 已自动编曲`)}
-$('#play').addEventListener('click',togglePlay);$('#stop').addEventListener('click',async()=>{playing=false;clearTimeout(timer);stopWave();pauseAiSong();if(context?.state==='running')await context.suspend();loop=0;beat=-1;startTime=0;render();notify('Playback stopped · 已停止播放')});
+function applyTemplate(i){currentTemplate=i;const t=templates[i];songLength=1;phrasePage=0;$('#tempo').value=t.tempo;pets.forEach(p=>{p.steps=(t.steps[p.id]||[0,8]).slice();p.clipRepeats=1;p.notes={};p.muted=false});refreshTransport();render();setStudioHint('Press Play together to hear this mood · 点击「一起演奏」试听这个模板');notify(`${t.name} is ready · ${t.name} 已自动编曲`)}
+document.addEventListener('visibilitychange',()=>{
+ if(!document.hidden)wakeTransport();
+});
+$('#play').addEventListener('click',togglePlay);
+$('#stop').addEventListener('click',()=>{stopPlayback();notify('Playback stopped · 已停止播放')});
 $('#positionToggle').addEventListener('click',()=>{
  if(!positioning){const saved=WERStore.getStagePositions($('#sceneSelect').value);positionDraft=Object.fromEntries(pets.map((p,i)=>[p.id,stagePosition(p,i,saved)]));positioning=true;render();notify('Drag your pets into place · 拖动宠物调整位置');return}
  if(!WERStore.saveStagePositions($('#sceneSelect').value,positionDraft)){notify('Browser storage is full · 浏览器空间不足');return}
@@ -301,27 +440,37 @@ $('#saveForm').addEventListener('submit',event=>{
  if(WERStore.saveSong(song)){clearTimeout(draftTimer);draftTimer=null;if(!incomingSong)WERStore.clearDraft();$('#draftResume').hidden=true;$('#localSaveStatus').textContent='Saved in this browser · 已保存在当前浏览器';notify('Saved to My Collection · 已保存到我的收藏');$('#saveDialog').close()}
  else $('#localSaveStatus').textContent='Browser storage is full · 浏览器存储空间不足';
 });
-$('#restart').addEventListener('click',()=>{if(playing){startTime=performance.now();startAiSong();loop=0;beat=-1;notify('Back to the first beat · 已回到第一拍')}else{beat=-1;render()}});
-$('#tempo').addEventListener('change',e=>{e.target.value=Math.min(160,Math.max(60,Number(e.target.value)||92));updateTimeDisplay()});
+$('#restart').addEventListener('click',()=>{
+ if(playing){startAiSong();resetTransport();notify('Back to the first beat · 已回到第一拍')}
+ else{beat=-1;render()}
+});
+$('#tempo').addEventListener('input',e=>{
+ const tempo=e.target.valueAsNumber;
+ if(tempo>=60&&tempo<=160){refreshTransport();updateTimeDisplay()}
+});
+$('#tempo').addEventListener('change',e=>{
+ e.target.value=studioTempo();
+ refreshTransport();updateTimeDisplay();renderClipUI();
+});
 function removeFromStage(id){
  if(pets.length<=1||positioning)return;
  customBuffers.delete(id);customLevels.delete(id);animationFrames.delete(id);
  pets=pets.filter(p=>p.id!==id);
  if(selected===id)selected=pets[0].id;
- render();notify('Pet removed from this band · 已从当前乐队移除');
+ refreshTransport();render();notify('Pet removed from this band · 已从当前乐队移除');
 }
-$('#petCards').addEventListener('click',e=>{if(suppressBeatClick)return;const remove=e.target.closest('[data-remove]');if(remove){removeFromStage(remove.dataset.remove);return}const mute=e.target.closest('[data-mute]');if(mute){const p=pets.find(a=>a.id===mute.dataset.mute);p.muted=!p.muted;render();return}const step=e.target.closest('[data-track][data-step]');if(step){const p=pets.find(a=>a.id===step.dataset.track),i=Number(step.dataset.step);focusBeat=i;toggleClipStep(p,i);selected=p.id;render();setStudioHint('Lit squares start a call; empty squares stay quiet · 亮格触发叫声，空格保持安静');if(effectiveSteps(p).includes(i))sound(p);return}const b=e.target.closest('[data-select]');if(b){selected=b.dataset.select;render()}});$('#stagePets').addEventListener('click',e=>{if(positioning)return;const b=e.target.closest('[data-id]');if(b){selected=b.dataset.id;render()}});
-$('#rhythm').addEventListener('click',e=>{const b=e.target.closest('[data-step]');if(!b)return;const p=pets.find(a=>a.id===selected),i=Number(b.dataset.step);focusBeat=i;toggleClipStep(p,i);render();if(effectiveSteps(p).includes(i))sound(p)});
-$('#soloBeat').addEventListener('click',()=>{const p=pets.find(a=>a.id===selected);if(!p)return;p.clipRepeats=1;p.steps=[focusBeat];p.notes=Object.fromEntries(Object.entries(p.notes||{}).filter(([step])=>Number(step)===focusBeat));p.muted=false;render();scheduleDraftSave();setStudioHint(`${p.name} plays only on beat ${focusBeat+1}; the sound fades naturally · ${p.name}只在第${focusBeat+1}拍触发，尾音自然结束`)});
+$('#petCards').addEventListener('click',e=>{if(suppressBeatClick)return;const remove=e.target.closest('[data-remove]');if(remove){removeFromStage(remove.dataset.remove);return}const mute=e.target.closest('[data-mute]');if(mute){const p=pets.find(a=>a.id===mute.dataset.mute);p.muted=!p.muted;refreshTransport();render();return}const step=e.target.closest('[data-track][data-step]');if(step){const p=pets.find(a=>a.id===step.dataset.track),i=Number(step.dataset.step);focusBeat=i;toggleClipStep(p,i);selected=p.id;refreshTransport();render();setStudioHint('Lit squares start a call; empty squares stay quiet · 亮格触发叫声，空格保持安静');if(effectiveSteps(p).includes(i))sound(p);return}const b=e.target.closest('[data-select]');if(b){selected=b.dataset.select;render()}});$('#stagePets').addEventListener('click',e=>{if(positioning)return;const b=e.target.closest('[data-id]');if(b){selected=b.dataset.id;render()}});
+$('#rhythm').addEventListener('click',e=>{const b=e.target.closest('[data-step]');if(!b)return;const p=pets.find(a=>a.id===selected),i=Number(b.dataset.step);focusBeat=i;toggleClipStep(p,i);refreshTransport();render();if(effectiveSteps(p).includes(i))sound(p)});
+$('#soloBeat').addEventListener('click',()=>{const p=pets.find(a=>a.id===selected);if(!p)return;p.clipRepeats=1;p.steps=[focusBeat];p.notes=Object.fromEntries(Object.entries(p.notes||{}).filter(([step])=>Number(step)===focusBeat));p.muted=false;refreshTransport();render();scheduleDraftSave();setStudioHint(`${p.name} plays only on beat ${focusBeat+1}; the sound fades naturally · ${p.name}只在第${focusBeat+1}拍触发，尾音自然结束`)});
 $('#solfegeKeys').addEventListener('click',async event=>{
  const key=event.target.closest('[data-solfege-row]');if(!key)return;
  const p=pets.find(item=>item.id===selected),row=Number(key.dataset.solfegeRow);if(!p)return;
  if((p.clipRepeats||1)>1){const period=clipPatternSteps(p),steps=effectiveSteps(p),notes={};for(const step of steps){const prior=p.notes?.[step%period];if(Number.isInteger(prior))notes[step]=prior}p.clipRepeats=1;p.steps=steps;p.notes=notes}
  p.notes||={};p.notes[focusBeat]=row;if(!p.steps.includes(focusBeat))p.steps.push(focusBeat);p.steps.sort((a,b)=>a-b);p.muted=false;
- render();scheduleDraftSave();setStudioHint(`${p.name} sings ${solfegeForRow[row]} on beat ${focusBeat+1} · ${p.name}在第${focusBeat+1}拍唱${solfegeForRow[row]}`);
+ refreshTransport();render();scheduleDraftSave();setStudioHint(`${p.name} sings ${solfegeForRow[row]} on beat ${focusBeat+1} · ${p.name}在第${focusBeat+1}拍唱${solfegeForRow[row]}`);
  try{context ||= new(window.AudioContext||window.webkitAudioContext)();await context.resume();await loadSamples();sound(p,0,noteOffset(row,p))}catch{notify('Could not preview this note · 这个音暂时无法试听')}
 });
-$('#volume').addEventListener('input',e=>{const p=pets.find(a=>a.id===selected);p.volume=Number(e.target.value);$('#volumeValue').textContent=`${p.volume}%`});$('#toneStrength').addEventListener('input',e=>{const p=pets.find(a=>a.id===selected);p.strength=Number(e.target.value);$('#toneStrengthValue').textContent=`${p.strength}%`});$('#echo').addEventListener('input',e=>{const p=pets.find(a=>a.id===selected);p.echo=Number(e.target.value);$('#echoValue').textContent=`${p.echo}%`});$('#pitch').addEventListener('input',e=>{const p=pets.find(a=>a.id===selected);p.pitch=Number(e.target.value);$('#pitchValue').textContent=`${p.pitch>0?'+':''}${p.pitch} st`});$('#repeat').addEventListener('change',e=>{pets.find(a=>a.id===selected).repeat=e.target.value});$('#voice').addEventListener('change',async e=>{const pet=pets.find(a=>a.id===selected);pet.tone=e.target.value;pet.source='voice';pet.clipStart=0;pet.clipEnd=pet.tone==='sample'&&pet.asset==='samoyed'?.36:1;render();if(pet.tone==='sample'||pet.tone==='meow'){context ||= new(window.AudioContext||window.webkitAudioContext)();await context.resume();await loadSamples()}sound(pet)});
+$('#volume').addEventListener('input',e=>{const p=pets.find(a=>a.id===selected);p.volume=Number(e.target.value);refreshTransport();$('#volumeValue').textContent=`${p.volume}%`});$('#toneStrength').addEventListener('input',e=>{const p=pets.find(a=>a.id===selected);p.strength=Number(e.target.value);refreshTransport();$('#toneStrengthValue').textContent=`${p.strength}%`});$('#echo').addEventListener('input',e=>{const p=pets.find(a=>a.id===selected);p.echo=Number(e.target.value);refreshTransport();$('#echoValue').textContent=`${p.echo}%`});$('#pitch').addEventListener('input',e=>{const p=pets.find(a=>a.id===selected);p.pitch=Number(e.target.value);refreshTransport();$('#pitchValue').textContent=`${p.pitch>0?'+':''}${p.pitch} st`});$('#repeat').addEventListener('change',e=>{pets.find(a=>a.id===selected).repeat=e.target.value;refreshTransport()});$('#voice').addEventListener('change',async e=>{const pet=pets.find(a=>a.id===selected);pet.tone=e.target.value;pet.source='voice';pet.clipStart=0;pet.clipEnd=pet.tone==='sample'&&pet.asset==='samoyed'?.36:1;refreshTransport();render();if(pet.tone==='sample'||pet.tone==='meow'){context ||= new(window.AudioContext||window.webkitAudioContext)();await context.resume();await loadSamples()}sound(pet)});
 $('#soundTab').addEventListener('click',()=>{document.querySelector('.sound-panel').hidden=false;document.querySelector('.effect-panel').hidden=true;$('#soundTab').classList.add('active');$('#effectTab').classList.remove('active')});$('#effectTab').addEventListener('click',()=>{document.querySelector('.sound-panel').hidden=true;document.querySelector('.effect-panel').hidden=false;$('#effectTab').classList.add('active');$('#soundTab').classList.remove('active')});$('#sourceRecord').addEventListener('click',async()=>{
  if(recording){recording.recorder.stop();return}
  if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){notify('Recording is unavailable in this browser · 此浏览器无法录音');return}
@@ -333,7 +482,7 @@ $('#soundTab').addEventListener('click',()=>{document.querySelector('.sound-pane
   recorder.start();recording.timer=setTimeout(()=>{if(recorder.state==='recording')recorder.stop()},12000);render();notify('Recording for up to 12 seconds · 最多录制 12 秒');
  }catch{notify('Microphone access was not granted · 未获得麦克风权限')}
 });
-$('#sourceUpload').addEventListener('click',()=>$('#voiceUpload').click());$('#sourceSynth').addEventListener('click',async()=>{const p=pets.find(a=>a.id===selected);p.source='voice';render();context ||= new(window.AudioContext||window.webkitAudioContext)();await context.resume();await loadSamples();sound(p)});
+$('#sourceUpload').addEventListener('click',()=>$('#voiceUpload').click());$('#sourceSynth').addEventListener('click',async()=>{const p=pets.find(a=>a.id===selected);p.source='voice';refreshTransport();render();context ||= new(window.AudioContext||window.webkitAudioContext)();await context.resume();await loadSamples();sound(p)});
 $('#importVoice').addEventListener('click',()=>$('#voiceUpload').click());
 $('#voiceUpload').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;const pet=pets.find(a=>a.id===selected);$('#voiceStatus').textContent='Converting your pet voice on this device… · 正在本机转换…';try{if(file.size>16*1024*1024)throw new Error('Please choose an audio file under 16 MB. · 请选小于 16 MB 的音频。');context ||= new(window.AudioContext||window.webkitAudioContext)();await context.resume();const buffer=await context.decodeAudioData(await file.arrayBuffer());if(buffer.duration>12)throw new Error('Please choose a clip under 12 seconds. · 请选 12 秒以内的片段。');useCustomVoice(pet,buffer,file.name.replace(/\.[^.]+$/,'').slice(0,28)||'My pet voice');render();sound(pet);notify('Your pet voice is now a beat-aligned track · 宠物声音已成为节奏声部')}catch(error){$('#voiceStatus').textContent='Try a short WAV, MP3 or M4A recording · 请使用短 WAV、MP3 或 M4A 录音';notify(error.message||'This browser could not read that audio · 浏览器无法读取此音频')}finally{e.target.value=''}});
 $('#preview').addEventListener('click',async()=>{context ||= new(window.AudioContext||window.webkitAudioContext)();await context.resume();await loadSamples();render();sound(pets.find(a=>a.id===selected))});
@@ -343,8 +492,8 @@ $('#pitch').addEventListener('change',async()=>{
  await context.resume();await loadSamples();sound(pet);
  setStudioHint(`Pitch ${pet.pitch>0?'+':''}${pet.pitch} st · 已试听新音高`);
 });
-$('#mute').addEventListener('click',()=>{const p=pets.find(a=>a.id===selected);p.muted=!p.muted;render()});$('#remove').addEventListener('click',()=>removeFromStage(selected));
-$('#add').addEventListener('click',()=>{if(pets.length<6)$('#picker').showModal()});$('#closePicker').addEventListener('click',()=>$('#picker').close());$('#choices').addEventListener('click',e=>{const b=e.target.closest('[data-add]');if(!b)return;const base=petTypes.find(p=>p.id===b.dataset.add);pets.push({...base,volume:50,pitch:0,tone:base.audioData?'custom':'signature',strength:70,echo:0,repeat:'loop',muted:false,steps:[0,8]});selected=base.id;$('#picker').close();render()});
+$('#mute').addEventListener('click',()=>{const p=pets.find(a=>a.id===selected);p.muted=!p.muted;refreshTransport();render()});$('#remove').addEventListener('click',()=>removeFromStage(selected));
+$('#add').addEventListener('click',()=>{if(pets.length<6)$('#picker').showModal()});$('#closePicker').addEventListener('click',()=>$('#picker').close());$('#choices').addEventListener('click',e=>{const b=e.target.closest('[data-add]');if(!b)return;const base=petTypes.find(p=>p.id===b.dataset.add);pets.push({...base,volume:50,pitch:0,tone:base.audioData?'custom':'signature',strength:70,echo:0,repeat:'loop',muted:false,steps:[0,8]});selected=base.id;$('#picker').close();refreshTransport();render()});
 $$('.template').forEach(b=>b.addEventListener('click',()=>applyTemplate(Number(b.dataset.template))));$('#random').addEventListener('click',()=>{
  currentTemplate=Math.floor(Math.random()*templates.length);
  const t=templates[currentTemplate];
@@ -359,7 +508,7 @@ $$('.template').forEach(b=>b.addEventListener('click',()=>applyTemplate(Number(b
   p.steps=Array.from({length:stepCount()},(_,i)=>i).filter(()=>Math.random()<.3);
   if(!p.steps.length)p.steps=[Math.floor(Math.random()*stepCount())];
  });
- render();
+ refreshTransport();render();
  setStudioHint('Pitches use one scale and share a beat · 音高限制在同一音阶，节拍已对齐，还能继续修改');
  notify('A new arrangement is ready · 新合奏已生成');
 });
@@ -393,7 +542,8 @@ $('#christmasTemplate').addEventListener('click',()=>{
  Object.assign(dog,{source:'voice',tone:'sample',volume:28,pitch:7,clipStart:0,clipEnd:1,clipRepeats:2,steps:[2,6,10,14],notes:{},repeat:'loop'});
  Object.assign(samoyed,{source:'instrument',instrument:'bell',tone:'signature',volume:82,pitch:12,clipStart:0,clipEnd:1,clipRepeats:1,steps:melody.map(([step])=>step),notes:Object.fromEntries(melody),repeat:'loop'});
  selected=samoyed.id;setStudioMode('advanced');
- if(playing){startTime=performance.now();loop=0;beat=-1}
+ resetTransport();
+ if(playing)loadInstrumentSamples();
  render();scheduleDraftSave();
  setStudioHint('Bright Jingle Bells is ready; tap a note to change it · 高音圣诞旋律已载入，点音符即可修改');
  notify('Bright Jingle Bells loaded · 高音《铃儿响叮当》已载入');
@@ -412,6 +562,7 @@ document.querySelector('#masterVolume').addEventListener('input',e=>{
 
 document.querySelector('#loopPlayback').addEventListener('change',e=>{
  loopPlayback=e.target.checked;
+ refreshTransport();
  notify(loopPlayback?'Loop on · 已开启循环':'Play once · 播放一遍后停止');
 });
 let pendingAiSample=null;
@@ -487,7 +638,7 @@ function scheduleDraftSave(){
 if(!incomingSong&&WERStore.getDraft())$('#draftResume').hidden=false;
 $('#resumeDraft').addEventListener('click',()=>{
  const draft=WERStore.getDraft();
- if(draft&&restoreSession(draft)){$('#stage').dataset.scene=$('#sceneSelect').value;drawScene();loadBackground();renderSceneOptions($('#sceneSelect').value);render();$('#draftResume').hidden=true;$('#localSaveStatus').textContent='Last session restored · 已恢复上次创作';notify('Last session restored · 已恢复上次创作')}
+ if(draft&&restoreSession(draft)){if(playing){refreshTransport();loadSamples().catch(()=>{})}$('#stage').dataset.scene=$('#sceneSelect').value;drawScene();loadBackground();renderSceneOptions($('#sceneSelect').value);render();$('#draftResume').hidden=true;$('#localSaveStatus').textContent='Last session restored · 已恢复上次创作';notify('Last session restored · 已恢复上次创作')}
  else {$('#draftResume').hidden=true;$('#localSaveStatus').textContent='Draft could not be restored · 无法恢复草稿'}
 });
 $('#skipDraft').addEventListener('click',()=>{$('#draftResume').hidden=true;$('#localSaveStatus').textContent='New session · 当前为新创作'});

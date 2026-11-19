@@ -103,7 +103,7 @@ function moveBeat(p,from,to){
  p.steps=p.steps.filter(step=>step!==old);
  if(!p.steps.includes(next))p.steps.push(next);
  p.steps.sort((a,b)=>a-b);
- selected=p.id;render();scheduleDraftSave();
+ selected=p.id;refreshTransport();render();scheduleDraftSave();
 }
 document.querySelector('#petCards').addEventListener('pointerdown',event=>{
  const button=event.target.closest('.track-steps button.enabled');if(!button)return;
@@ -134,7 +134,7 @@ document.querySelector('#petCards').addEventListener('keydown',event=>{
  if(p)moveBeat(p,from,Math.max(0,Math.min(stepCount()-1,from+(event.key==='ArrowLeft'?-1:1))));
 });
 document.querySelector('.clip-repeat').addEventListener('click',event=>{
- const button=event.target.closest('[data-clip-repeat]');if(!button)return;setClipRepeats(pets.find(p=>p.id===selected),Number(button.dataset.clipRepeat));render();scheduleDraftSave();
+ const button=event.target.closest('[data-clip-repeat]');if(!button)return;setClipRepeats(pets.find(p=>p.id===selected),Number(button.dataset.clipRepeat));refreshTransport();render();scheduleDraftSave();
 });
 document.querySelector('#clipLoad').addEventListener('click',async()=>{
  sampleLoad=null;singingLoad=null;samplesReady=false;renderClipUI();
@@ -148,6 +148,7 @@ for(const [prefix,kind] of [['clip','pet'],['song','song']])for(const side of ['
   if(kind==='pet'){
    const p=pets.find(item=>item.id===boundaryDrag.id),buffer=clipBufferFor(p);if(!buffer)return;const gap=Math.min(.12,.08/buffer.duration);
    if(side==='Start')p.clipStart=Math.min(fraction,(p.clipEnd??1)-gap);else p.clipEnd=Math.max(fraction,(p.clipStart||0)+gap);
+   refreshTransport();
    placeHandles('clip',p.clipStart||0,p.clipEnd??1);document.querySelector('#clipTimeLabel').textContent=`${((p.clipStart||0)*buffer.duration).toFixed(2)}s – ${((p.clipEnd??1)*buffer.duration).toFixed(2)}s`;
   }else if(songWaveBuffer){
    const duration=songWaveBuffer.duration,gap=Math.min(.5,duration*.02);
@@ -156,7 +157,7 @@ for(const [prefix,kind] of [['clip','pet'],['song','song']])for(const side of ['
   }
  });
  handle.addEventListener('pointerup',()=>{if(!boundaryDrag)return;const was=boundaryDrag.prefix;boundaryDrag=null;if(was==='clip')render();else renderSongWave();scheduleDraftSave()});
- handle.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight'].includes(event.key))return;event.preventDefault();const delta=(event.key==='ArrowLeft'?-1:1)*.02;if(kind==='pet'){const p=pets.find(item=>item.id===selected);if(side==='Start')p.clipStart=Math.max(0,Math.min((p.clipEnd??1)-.05,(p.clipStart||0)+delta));else p.clipEnd=Math.min(1,Math.max((p.clipStart||0)+.05,(p.clipEnd??1)+delta));render()}else if(songWaveBuffer){if(side==='Start')aiSongRange.start=Math.max(0,Math.min(aiSongRange.end-.2,aiSongRange.start+delta*songWaveBuffer.duration));else aiSongRange.end=Math.min(songWaveBuffer.duration,Math.max(aiSongRange.start+.2,aiSongRange.end+delta*songWaveBuffer.duration));document.querySelector('#aiSongStart').value=String(aiSongRange.start);document.querySelector('#aiSongEnd').value=String(aiSongRange.end);updateAiSongRange();renderSongWave()}scheduleDraftSave()});
+ handle.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight'].includes(event.key))return;event.preventDefault();const delta=(event.key==='ArrowLeft'?-1:1)*.02;if(kind==='pet'){const p=pets.find(item=>item.id===selected);if(side==='Start')p.clipStart=Math.max(0,Math.min((p.clipEnd??1)-.05,(p.clipStart||0)+delta));else p.clipEnd=Math.min(1,Math.max((p.clipStart||0)+.05,(p.clipEnd??1)+delta));refreshTransport();render()}else if(songWaveBuffer){if(side==='Start')aiSongRange.start=Math.max(0,Math.min(aiSongRange.end-.2,aiSongRange.start+delta*songWaveBuffer.duration));else aiSongRange.end=Math.min(songWaveBuffer.duration,Math.max(aiSongRange.start+.2,aiSongRange.end+delta*songWaveBuffer.duration));document.querySelector('#aiSongStart').value=String(aiSongRange.start);document.querySelector('#aiSongEnd').value=String(aiSongRange.end);updateAiSongRange();renderSongWave()}scheduleDraftSave()});
 }
 async function prepareSongWave(blob){
  if(!aiSongData)return;
