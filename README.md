@@ -25,6 +25,26 @@ A pixel pet music playground
 
 **WEEK3：**
 
+老师反馈内容to do list：✅️
+
+1.接入API，11lab
+
+2.新手入门和可编辑
+
+3.乐器放到进阶
+
+4.增加loop，音乐小结
+
+5.需要移动长度
+
+· You Xiu：把乐器加入进阶部分。✅️
+
+· Wang Yuanyuan：加入API+生成pet声音样本。✅️
+
+· Wang Yuting：更新小段节奏页面。✅️
+
+· Tao Xinyan：宠物视频反应。✅️
+
 
 
 
