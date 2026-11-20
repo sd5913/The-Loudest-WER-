@@ -70,25 +70,27 @@ async function exportAiSong(mix,offline,sectionSeconds){
   source.connect(gain).connect(mix);source.start(at,start,duration);source.stop(at+duration+.01);
  }
 }
-async function renderExportAudio(){
+async function renderExportAudio({loops=1}={}){
+ loops=[1,2,4].includes(loops)?loops:1;
  if(!pets.some(p=>!p.muted&&effectiveSteps(p).length)||!pets.length){
-  if(!chordEnabled&&!aiSongData)throw new Error('Add a sound before exporting · 请先添加可播放的声音');
+  if(!chordEnabled&&!aiSongData)throw new Error('Add a sound before exporting');
  }
  context ||= new(window.AudioContext||window.webkitAudioContext)();
  await loadSamples();
  if(pets.some(p=>p.source==='instrument'))await loadInstrumentSamples();
- const bpm=Number($('#tempo').value)||92,seconds=stepCount()*60/bpm,sampleRate=44100;
+ const bpm=Number($('#tempo').value)||92,seconds=stepCount()*loops*60/bpm,sampleRate=44100;
  const Offline=window.OfflineAudioContext||window.webkitOfflineAudioContext;
- if(!Offline)throw new Error('This browser cannot export WAV · 当前浏览器无法导出 WAV');
+ if(!Offline)throw new Error('This browser cannot export WAV');
  const offline=new Offline(2,Math.ceil((seconds+8)*sampleRate),sampleRate);
  const mix=offline.createGain(),limiter=offline.createDynamicsCompressor(),master=offline.createGain();
  limiter.threshold.value=-18;limiter.knee.value=12;limiter.ratio.value=4;
  master.gain.value=Number($('#masterVolume').value)/100;
  mix.connect(limiter).connect(master).connect(offline.destination);
- for(let step=0;step<stepCount();step++){
-  const at=.04+step*60/bpm;
+ for(let absoluteStep=0;absoluteStep<stepCount()*loops;absoluteStep++){
+  const step=absoluteStep%stepCount(),cycle=Math.floor(absoluteStep/stepCount());
+  const at=.04+absoluteStep*60/bpm;
   for(const p of pets){
-   if(p.muted||!effectiveSteps(p).includes(step))continue;
+   if(p.muted||!petPlaysInLoop(p,cycle)||!effectiveSteps(p).includes(step))continue;
    exportVoice(p,at,melodyOffset(p,step%clipPatternSteps(p)),mix,offline);
   }
   exportChord(step,at,mix,offline,bpm);
@@ -116,7 +118,7 @@ function wavBlob(buffer){
 $('#exportAudio').addEventListener('click',async()=>{
  const button=$('#exportAudio'),status=$('#exportStatus');
  if(playing)await togglePlay();
- button.disabled=true;button.setAttribute('aria-busy','true');status.textContent='Rendering WAV on this device… · 正在本机生成音频…';
+ button.disabled=true;button.setAttribute('aria-busy','true');status.textContent='Rendering WAV on this device…';
  try{
   const buffer=await renderExportAudio(),blob=wavBlob(buffer);
   const saved=incomingSong&&WERStore.getSongs().find(song=>song.id===incomingSong);
@@ -125,8 +127,8 @@ $('#exportAudio').addEventListener('click',async()=>{
   const url=URL.createObjectURL(blob),link=document.createElement('a');
   link.href=url;link.download=`${filename}.wav`;document.body.append(link);link.click();link.remove();
   setTimeout(()=>URL.revokeObjectURL(url),30000);
-  status.textContent='WAV downloaded · 音频已下载到这台设备';
-  notify('WAV ready · WAV 音频已导出');
- }catch(error){status.textContent=error.message||'Export failed · 导出失败'}
+  status.textContent='WAV downloaded';
+  notify('WAV ready · WAV');
+ }catch(error){status.textContent=error.message||'Export failed'}
  finally{button.disabled=false;button.removeAttribute('aria-busy')}
 });
