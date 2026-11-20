@@ -1,0 +1,79 @@
+[
+  {
+    "id": "xylophone",
+    "bank": "xylophone",
+    "note": "C4",
+    "bytes": 14353,
+    "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/xylophone-mp3.js"
+  },
+  {
+    "id": "violin",
+    "bank": "violin",
+    "note": "C4",
+    "bytes": 25585,
+    "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/violin-mp3.js"
+  },
+  {
+    "id": "accordion",
+    "bank": "accordion",
+    "note": "C4",
+    "bytes": 25585,
+    "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/accordion-mp3.js"
+  },
+  {
+    "id": "saxophone",
+    "bank": "alto_sax",
+    "note": "C4",
+    "bytes": 25585,
+    "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/alto_sax-mp3.js"
+  },
+  {
+    "id": "trumpet",
+    "bank": "trumpet",
+    "note": "C4",
+    "bytes": 25351,
+    "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/trumpet-mp3.js"
+  },
+  {
+    "id": "synth",
+    "bank": "electric_piano_1",
+    "note": "C4",
+    "bytes": 19553,
+    "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/electric_piano_1-mp3.js"
+  },
+  {
+    "id": "flute",
+    "bank": "flute",
+    "note": "C4",
+    "bytes": 25585,
+    "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/flute-mp3.js"
+  },
+  {
+    "id": "piano",
+    "bank": "acoustic_grand_piano",
+    "note": "C4",
+    "bytes": 25585,
+    "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3.js"
+  },
+  {
+    "id": "electric-guitar",
+    "bank": "electric_guitar_clean",
+    "note": "C4",
+    "bytes": 20567,
+    "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/electric_guitar_clean-mp3.js"
+  },
+  {
+    "id": "harp",
+    "bank": "orchestral_harp",
+    "note": "C4",
+    "bytes": 16953,
+    "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/orchestral_harp-mp3.js"
+  },
+  {
+    "id": "guitar",
+    "bank": "acoustic_guitar_nylon",
+    "note": "C4",
+    "bytes": 15809,
+    "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/acoustic_guitar_nylon-mp3.js"
+  }
+]
