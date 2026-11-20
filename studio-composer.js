@@ -54,8 +54,8 @@ function drawWave(){
 function startWave(){ensureAnalyser();cancelAnimationFrame(waveFrame);drawWave()}
 function stopWave(){cancelAnimationFrame(waveFrame);waveFrame=0;drawWave()}
 function renderComposer(){
- const rhythm=document.querySelector('.band-section'),melody=document.querySelector('#melodyPanel'),chords=document.querySelector('#chordsPanel');
- rhythm.hidden=composerMode!=='rhythm';melody.hidden=composerMode!=='melody';chords.hidden=composerMode!=='chords';
+ const rhythm=document.querySelector('.band-section'),melody=document.querySelector('#melodyPanel');
+ rhythm.hidden=composerMode!=='rhythm';melody.hidden=composerMode!=='melody';
  document.querySelectorAll('[data-compose-mode]').forEach(button=>{
   const active=button.dataset.composeMode===composerMode;
   button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active));
@@ -63,20 +63,17 @@ function renderComposer(){
  document.querySelector('#meter').value=meter;
  document.querySelector('#musicKey').value=musicKey;
  document.querySelector('#songLength').value=String(songLength);
- document.querySelector('#lengthHint').textContent=`${stepCount()/ (meter==='3/4'?3:4)} bars · ${stepCount()/ (meter==='3/4'?3:4)} 小节 · ${stepCount()} beats`;
+ document.querySelector('#lengthHint').textContent=`${stepCount()/ (meter==='3/4'?3:4)} bars · ${stepCount()} beats`;
  document.querySelector('#phraseNav').hidden=songLength===1;
  document.querySelectorAll('[data-phrase-page]').forEach(button=>{const active=Number(button.dataset.phrasePage)===phrasePage;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active))});
- document.querySelector('#chordLoop').checked=chordEnabled;
  const p=pets.find(p=>p.id===selected)||pets[0];
- document.querySelector('#melodyTitle').textContent=`Melody · 旋律（${p.name}）`;
+ document.querySelector('#melodyTitle').textContent=`Melody${p.name}）`;
  const notes=p.notes||{};
  document.querySelector('#melodyGrid').innerHTML=noteNames[musicKey].map((name,row)=>
   `<div class="note-name">${name}</div>`+
   Array.from({length:16},(_,i)=>{const step=pageStart()+i,base=step%clipPatternSteps(p);return `<button type="button" class="note-cell ${notes[base]===row&&effectiveSteps(p).includes(step)?'on':''} ${step>=stepCount()?'outside-meter':''} ${playing&&step===beat?'current':''}" data-note-step="${step}" data-note-row="${row}" aria-label="${p.name} ${name} beat ${step+1}" aria-pressed="${notes[base]===row&&effectiveSteps(p).includes(step)}" ${step>=stepCount()?'disabled':''}></button>`}).join('')
  ).join('');
- document.querySelector('#chordSlots').innerHTML=chordPattern.slice(0,stepCount()/4).map((chord,i)=>
-  `<button type="button" class="chord-slot ${playing&&Math.floor(beat/4)===i?'current':''}" data-chord-slot="${i}" aria-label="Beat ${i+1}: ${chord==='—'?'No chord':chordLabels[musicKey][chord]}. Click to change."><small>BEAT ${i+1}</small><b>${chord==='—'?'—':chordLabels[musicKey][chord]}</b><span>${chord==='—'?'Silent · 静音':'Click to change · 点击切换'}</span></button>`
- ).join('');
+
 }
 function updateComposerPlayhead(){
  document.querySelectorAll('.note-cell').forEach(el=>el.classList.toggle('current',playing&&Number(el.dataset.noteStep)===beat));
@@ -103,7 +100,7 @@ function loadComposerState(song){
  meter=song.meter==='3/4'?'3/4':'4/4';
  musicKey=Object.hasOwn(keyOffsets,song.musicKey)?song.musicKey:'C';
  songLength=song.songLength===2?2:1;
- chordEnabled=Boolean(song.chordEnabled);
+ chordEnabled=false; // Legacy chord backing is disabled after removing its editor.
  if(Array.isArray(song.chordPattern))chordPattern=song.chordPattern.slice(0,stepCount()/4).map(v=>chordChoices.includes(v)?v:'—');
  while(chordPattern.length<stepCount()/4)chordPattern.push(chordPattern[chordPattern.length%4]||'C');
 }
@@ -112,7 +109,6 @@ document.querySelector('#songLength').addEventListener('change',e=>{songLength=N
 document.querySelector('#phraseNav').addEventListener('click',e=>{const button=e.target.closest('[data-phrase-page]');if(!button)return;phrasePage=Number(button.dataset.phrasePage);render()});
 document.querySelector('#meter').addEventListener('change',e=>{meter=e.target.value;beat=-1;if(playing)startTime=performance.now();render();});
 document.querySelector('#musicKey').addEventListener('change',e=>{musicKey=e.target.value;renderComposer()});
-document.querySelector('#chordLoop').addEventListener('change',e=>{chordEnabled=e.target.checked;renderComposer()});
 document.querySelector('#melodyGrid').addEventListener('click',e=>{
  const cell=e.target.closest('[data-note-step]');if(!cell)return;
  const p=pets.find(p=>p.id===selected),step=Number(cell.dataset.noteStep)%clipPatternSteps(p),row=Number(cell.dataset.noteRow);
@@ -120,21 +116,4 @@ document.querySelector('#melodyGrid').addEventListener('click',e=>{
  if(p.notes[step]===row&&p.steps.includes(step)){delete p.notes[step];p.steps=p.steps.filter(s=>s!==step)}
  else{p.notes[step]=row;if(!p.steps.includes(step))p.steps.push(step);p.steps.sort((a,b)=>a-b);context ||= new(window.AudioContext||window.webkitAudioContext)();context.resume().then(()=>sound(p,0,noteOffset(row,p)))}
  render();
-});
-document.querySelector('#chordSlots').addEventListener('click',e=>{
- const slot=e.target.closest('[data-chord-slot]');if(!slot)return;
- const i=Number(slot.dataset.chordSlot);
- chordPattern[i]=chordChoices[(chordChoices.indexOf(chordPattern[i])+1)%chordChoices.length];
- renderComposer();
-});
-document.querySelector('#chordPreset').addEventListener('change',e=>{
- const pattern=({beginner:['C','Am','F','G'],pop:['C','G','Am','F'],dream:['Am','F','C','G'],bright:['C','F','G','C']})[e.target.value];
- chordPattern=Array.from({length:stepCount()/4},(_,i)=>pattern[i%pattern.length]);
- chordEnabled=true;renderComposer();
-});
-document.querySelector('#beginnerChords').addEventListener('click',()=>{
- document.querySelector('#chordPreset').value='beginner';
- document.querySelector('#chordPreset').dispatchEvent(new Event('change'));
- composerMode='chords';renderComposer();
- notify('C–Am–F–G is ready · 四和弦已加入合奏');
 });

@@ -20,15 +20,20 @@
 
   ];
   // A first-listen trio. Each pet has its own editable track and sound source.
+  const christmasNotes = Object.fromEntries(
+    [[0,5],[1,5],[2,5],[4,5],[5,5],[6,5],[8,5],[9,3],[10,7],[11,6],[12,5],
+     [16,5],[17,5],[18,5],[20,5],[21,5],[22,5],[24,5],[25,3],[26,7],[27,6],[28,5]]
+  );
+  const christmasSteps = Object.keys(christmasNotes).map(Number);
   const demoSong = {
-    id: 'song-1793940787462', name: '虫儿飞 · 三位伙伴合奏练习', savedAt: '2026-11-06T00:00:00.000Z',
-    tempo: 88, version: 3, template: 0, scene: 'night', selected: 'ghost-cat',
+    id: 'song-1793940787462', demoVersion: 3, name: 'Jingle Bells · Pet Choir', description: 'Gray Cat meows “mi mi mi, mi mi mi, mi sol do re mi” while Dachshund and Samoyed join with their own calls.', savedAt: '2026-11-20T00:00:00.000Z',
+    tempo: 128, version: 3, template: -1, scene: 'cozy', selected: 'cat',
     meter: '4/4', musicKey: 'C', songLength: 2, chordEnabled: false,
     chordPattern: ['C', 'G', 'Am', 'F', 'C', 'G', 'Am', 'F'],
     pets: [
-      { id: 'cat', name: 'Gray Cat', volume: 38, pitch: 0, tone: 'sample', strength: 70, echo: 0, repeat: 'loop', muted: false, steps: [5, 13, 21, 29], notes: {}, source: 'voice', instrument: 'piano' },
-      { id: 'ghost-cat', name: 'Dachshund', volume: 60, pitch: 0, tone: 'sample', strength: 70, echo: 0, repeat: 'loop', muted: false, steps: [0, 1, 2, 3, 4, 7, 10, 16, 17, 18, 19, 20, 23, 26], notes: { 0: 5, 1: 5, 2: 5, 3: 4, 4: 3, 7: 5, 10: 6, 16: 7, 17: 7, 18: 7, 19: 6, 20: 5, 23: 5, 26: 8 }, source: 'voice', instrument: 'piano' },
-      { id: 'bat-cat', name: 'Samoyed', volume: 46, pitch: 0, tone: 'signature', strength: 70, echo: 0, repeat: 'loop', muted: false, steps: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30], notes: { 0: 7, 2: 5, 4: 3, 6: 5, 8: 7, 10: 5, 12: 3, 14: 5, 16: 7, 18: 5, 20: 3, 22: 5, 24: 7, 26: 6, 28: 3, 30: 8 }, source: 'instrument', instrument: 'guitar' }
+      { id: 'cat', name: 'Gray Cat', volume: 70, pitch: 0, tone: 'sample', strength: 78, echo: 8, repeat: 'loop', muted: false, steps: christmasSteps, notes: christmasNotes, source: 'voice', instrument: 'piano' },
+      { id: 'ghost-cat', name: 'Dachshund', volume: 48, pitch: -12, tone: 'sample', strength: 70, echo: 5, repeat: 'loop', muted: false, steps: christmasSteps, notes: christmasNotes, source: 'voice', instrument: 'piano' },
+      { id: 'bat-cat', name: 'Samoyed', volume: 44, pitch: 12, tone: 'sample', strength: 70, echo: 10, repeat: 'loop', muted: false, steps: christmasSteps, notes: christmasNotes, source: 'voice', instrument: 'piano' }
     ]
   };
   window.WERStore = {
@@ -43,7 +48,15 @@
         write('songs', [demoSong]);
         return [demoSong];
       }
-      return read('songs', []);
+      const songs = read('songs', []);
+      const oldDemo = songs.find(song => song.id === demoSong.id &&
+        (song.demoVersion === 2 || (!song.demoVersion && (!song.name || /虫飞|虫儿飞/.test(song.name) || song.savedAt === '2026-11-06T00:00:00.000Z'))));
+      if (oldDemo) {
+        const migrated = songs.map(song => song.id === demoSong.id ? { ...demoSong } : song);
+        write('songs', migrated);
+        return migrated;
+      }
+      return songs;
     },
     saveSong(song) { const songs = this.getSongs().filter(item => item.id !== song.id); songs.unshift(song); return write('songs', songs.slice(0, 40)); },
     getDraft: () => read('draft', null),

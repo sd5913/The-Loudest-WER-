@@ -1,25 +1,47 @@
-// Original local WAV samples. Each pet can independently switch between pet voice and instrument.
+// Local instrument samples and user-provided pixel artwork. Each pet can independently switch between pet voice and instrument.
 const instruments=[
- {id:'piano',name:'Piano',zh:'像素钢琴',category:'keys',base:523.25,shift:0},
- {id:'guitar',name:'Guitar',zh:'吉他',category:'strings',base:392,shift:-12},
- {id:'bass',name:'Bass',zh:'贝斯',category:'strings',base:130.81,shift:-24},
- {id:'drum',name:'Drum',zh:'架子鼓',category:'perc',base:110,shift:0},
- {id:'synth',name:'Synth',zh:'合成器',category:'keys',base:523.25,shift:0},
- {id:'bell',name:'Bell',zh:'钟琴',category:'perc',base:659.25,shift:0},
- {id:'violin',name:'Violin',zh:'小提琴',category:'strings',base:440,shift:0},
- {id:'flute',name:'Flute',zh:'长笛',category:'wind',base:587.33,shift:0}
+ {id:'xylophone',name:'Xylophone',category:'perc',base:261.6256,shift:0},
+ {id:'violin',name:'Violin',category:'strings',base:261.6256,shift:0},
+ {id:'accordion',name:'Accordion',category:'keys',base:261.6256,shift:0},
+ {id:'saxophone',name:'Saxophone',category:'wind',base:261.6256,shift:0},
+ {id:'trumpet',name:'Trumpet',category:'wind',base:261.6256,shift:0},
+ {id:'synth',name:'Keyboard',category:'keys',base:261.6256,shift:0},
+ {id:'flute',name:'Flute',category:'wind',base:261.6256,shift:0},
+ {id:'piano',name:'Piano',category:'keys',base:261.6256,shift:0},
+ {id:'electric-guitar',name:'Electric Guitar',category:'strings',base:261.6256,shift:0},
+ {id:'harp',name:'Harp',category:'strings',base:261.6256,shift:0},
+ {id:'drum',name:'Drum Kit',category:'perc',base:110,shift:0,file:'drum.wav'},
+ {id:'guitar',name:'Acoustic Guitar',category:'strings',base:261.6256,shift:0},
+ // Keep earlier compositions and the Jingle Bells template playable.
+ {id:'bass',name:'Bass',category:'strings',base:130.81,shift:-24,legacy:true,file:'bass.wav'},
+ {id:'bell',name:'Bell',category:'perc',base:659.25,shift:0,legacy:true,file:'bell.wav'}
 ];
 const instrumentBuffers=new Map();
-let instrumentLoad=null,instrumentCategory='all';
+let instrumentLoad=null,instrumentCategory='all',instrumentsCollapsed=false;
+const instrumentCollapse=document.createElement('button');
+instrumentCollapse.type='button';instrumentCollapse.className='instrument-collapse';instrumentCollapse.setAttribute('aria-controls','instrumentGrid');
+document.querySelector('[data-instrument-category="all"]').after(instrumentCollapse);
+function updateInstrumentCollapse(){
+ document.querySelector('#instrumentGrid').hidden=instrumentsCollapsed;
+ document.querySelector('.instrument-note').hidden=instrumentsCollapsed;
+ instrumentCollapse.textContent=instrumentsCollapsed?'▸':'▾';
+ instrumentCollapse.setAttribute('aria-expanded',String(!instrumentsCollapsed));
+ instrumentCollapse.setAttribute('aria-label',instrumentsCollapsed?'Expand instruments':'Collapse instruments');
+ instrumentCollapse.title=instrumentsCollapsed?'Expand instruments':'Collapse instruments';
+}
+instrumentCollapse.addEventListener('click',()=>{instrumentsCollapsed=!instrumentsCollapsed;updateInstrumentCollapse()});
+document.querySelector('.instrument-note').innerHTML='Tap an instrument to preview its sound. <a href="assets/instruments/CREDITS.txt" target="_blank" rel="noopener">Sound credits ↗</a>';
 async function loadInstrumentSamples(){
  if(instrumentLoad)return instrumentLoad;
  instrumentLoad=Promise.all(instruments.map(async instrument=>{
   try{
-   const response=await fetch(`assets/instruments/${instrument.id}.wav`);
+   const response=await fetch(`assets/instruments/${instrument.file||instrument.id+'.mp3'}`);
    if(!response.ok)throw new Error('Missing instrument audio');
    instrumentBuffers.set(instrument.id,await context.decodeAudioData(await response.arrayBuffer()));
   }catch(error){console.warn('Instrument sample unavailable:',instrument.id,error)}
  }));
+ await instrumentLoad;
+ document.querySelector('#instrumentGrid').dataset.loadedSamples=String(instrumentBuffers.size);
  return instrumentLoad;
 }
 function playInstrument(p,time,noteOffset=0){
@@ -44,6 +66,7 @@ function playInstrument(p,time,noteOffset=0){
  return true;
 }
 function renderInstrumentPicker(p){
+ updateInstrumentCollapse();
  const selected=p.instrument||'piano';
  document.querySelector('#instrumentPicker').hidden=p.source!=='instrument';
  document.querySelector('#voicePicker').hidden=p.source==='instrument';
@@ -53,8 +76,8 @@ function renderInstrumentPicker(p){
   const active=button.dataset.instrumentCategory===instrumentCategory;
   button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));
  });
- document.querySelector('#instrumentGrid').innerHTML=instruments.filter(item=>instrumentCategory==='all'||item.category===instrumentCategory).map(item=>
-  `<button type="button" class="instrument-card ${item.id===selected?'active':''}" data-instrument="${item.id}" aria-pressed="${item.id===selected}"><img src="assets/instruments/${item.id}.svg" alt=""><b>${item.name}</b><small>${item.zh}</small></button>`
+ document.querySelector('#instrumentGrid').innerHTML=instruments.filter(item=>!item.legacy&&(instrumentCategory==='all'||item.category===instrumentCategory)).map(item=>
+  `<button type="button" class="instrument-card ${item.id===selected?'active':''}" data-instrument="${item.id}" aria-pressed="${item.id===selected}"><img src="assets/instruments/${item.id}.png" alt=""><b>${item.name}</b><small>${item.category==='perc'?'Percussion':item.category==='keys'?'Keys':item.category==='strings'?'Strings':'Wind'}</small></button>`
  ).join('');
 }
 document.querySelector('#sourceInstrument').addEventListener('click',async()=>{
@@ -65,7 +88,7 @@ document.querySelector('#sourceInstrument').addEventListener('click',async()=>{
 });
 document.querySelector('#instrumentFilters').addEventListener('click',e=>{
  const button=e.target.closest('[data-instrument-category]');if(!button)return;
- instrumentCategory=button.dataset.instrumentCategory;
+ instrumentCategory=button.dataset.instrumentCategory;instrumentsCollapsed=false;
  renderInstrumentPicker(pets.find(item=>item.id===selected));
 });
 document.querySelector('#instrumentGrid').addEventListener('click',async e=>{
