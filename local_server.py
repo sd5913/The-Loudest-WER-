@@ -6,6 +6,7 @@ No key is read from the webpage or stored in this folder.
 """
 import json
 import os
+import re
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.error import HTTPError, URLError
@@ -40,6 +41,29 @@ class Handler(SimpleHTTPRequestHandler):
         self.do_GET()
 
     def do_POST(self):
+        if self.path in ("/__design-export", "/__design-report"):
+            try:
+                size = int(self.headers.get("Content-Length", "0"))
+                if not 0 < size <= 24 * 1024 * 1024:
+                    self.reply(400, {"error": "Invalid export size"})
+                    return
+                value = json.loads(self.rfile.read(size))
+                folder = ROOT / "figma-svg"
+                folder.mkdir(exist_ok=True)
+                if self.path == "/__design-export":
+                    name, svg = value.get("name", ""), value.get("svg", "")
+                    if not re.fullmatch(r"[A-Za-z0-9_-]{1,100}", name) or not isinstance(svg, str) or not svg.startswith("<svg "):
+                        self.reply(400, {"error": "Invalid SVG export"})
+                        return
+                    (folder / (name + ".svg")).write_text(svg, encoding="utf-8")
+                else:
+                    if not isinstance(value, list):
+                        raise ValueError("Expected state list")
+                    (folder / "states.json").write_text(json.dumps(value, ensure_ascii=False, indent=2), encoding="utf-8")
+                self.reply(200, {"saved": True})
+            except (ValueError, TypeError, OSError):
+                self.reply(400, {"error": "Export could not be saved"})
+            return
         if self.path not in ("/api/generate-sample", "/api/generate-song", "/api/generate-speech"):
             self.send_error(404)
             return

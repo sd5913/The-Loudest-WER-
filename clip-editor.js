@@ -88,13 +88,13 @@ function renderClipUI(){
   const windowSeconds=stepCount()/repeat*60/bpm;
   const soundSeconds=buffer?clipRange(p,buffer).duration/2**(p.pitch/12):0;
   button.disabled=Boolean(buffer&&soundSeconds>windowSeconds-.05&&!active);
-  button.title=button.disabled?'Sound is longer than this repeat window · 声音长于循环小段':'';
+  button.title=button.disabled?'Sound is longer than this repeat window':'';
   button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));
  });
  shell.hidden=!buffer;document.querySelector('#clipLoad').hidden=Boolean(buffer)||!['custom','sample','meow'].includes(p.tone);
- document.querySelector('#clipEditorHint').textContent=buffer?'Drag either handle to keep the part you want · 拖动两端保留想要的声音':p.source==='instrument'?'Instrument notes use their full natural length · 乐器音符保持自然时长':samplesReady?'Sound unavailable; try loading again · 声音未加载，请重试':'Loading sound… · 正在加载声音…';
+ document.querySelector('#clipEditorHint').textContent=buffer?'Drag either handle to keep the part you want':p.source==='instrument'?'Instrument notes use their full natural length':samplesReady?'Sound unavailable; try loading again':'Loading sound……';
  if(buffer){const start=p.clipStart||0,end=p.clipEnd??1;drawClipWave(document.querySelector('#clipWaveCanvas'),buffer,start,end);placeHandles('clip',start,end);document.querySelector('#clipTimeLabel').textContent=`${(start*buffer.duration).toFixed(2)}s – ${(end*buffer.duration).toFixed(2)}s`}
- else document.querySelector('#clipTimeLabel').textContent=p.source==='instrument'?'Full note · 自然时长':samplesReady?'Sound unavailable · 声音未加载':'Loading sound… · 正在加载声音…';
+ else document.querySelector('#clipTimeLabel').textContent=p.source==='instrument'?'Full note':samplesReady?'Sound unavailable':'Loading sound……';
 }
 let clipDrag=null,suppressBeatClick=false,boundaryDrag=null,songWaveBuffer=null;
 function moveBeat(p,from,to){

@@ -1,3 +1,5 @@
+> **Local UI revision / 本地界面修改版：** Start with [README_LILY_UI.md](README_LILY_UI.md) for the current interface, local preview and validation record. The upstream introduction below describes an earlier interface. / 当前操作与验证请看新说明；下方为上游旧版介绍。
+
 
 <p align="center">
   <img src="assets/wer-christmas-ui/logo_sunset.png" alt="The Loudest WER! logo" width="300">
@@ -14,7 +16,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/images/operation-guide/home-annotated.jpg" alt="Annotated Home page showing navigation, the interactive pet room, and three quick actions">
+  <img src="https://raw.githubusercontent.com/sd5913/The-Loudest-WER-/b1f292635bf01d6c31f4baafb37150419b0364b3/docs/images/operation-guide/home-annotated.jpg" alt="Annotated Home page showing navigation, the interactive pet room, and three quick actions">
 </p>
 <p align="center"><sub>Home preview · ① Page navigation　② Interactive room and pets　③ Quick actions</sub></p>
 
@@ -72,7 +74,7 @@ Open the [team repository](https://github.com/sd5913/The-Loudest-WER-). For ongo
 打开[团队仓库](https://github.com/sd5913/The-Loudest-WER-)。需要持续协作时，在 VS Code 克隆仓库并先切换到**自己的分支**再修改。下载 ZIP 适合查看项目，不适合持续同步协作内容。
 
 <p align="center">
-  <img src="docs/images/operation-guide/team-workflow.png" alt="Team workflow: clone the repository, work on a personal branch, preview, push, open a Pull Request, and merge after review" width="680">
+  <img src="https://raw.githubusercontent.com/sd5913/The-Loudest-WER-/b1f292635bf01d6c31f4baafb37150419b0364b3/docs/images/operation-guide/team-workflow.png" alt="Team workflow: clone the repository, work on a personal branch, preview, push, open a Pull Request, and merge after review" width="680">
 </p>
 
 1. **Clone and branch · 克隆并切换分支:** In VS Code, choose **Git: Clone**, paste the [repository URL](https://github.com/sd5913/The-Loudest-WER-.git), choose a local folder, then switch to your own branch. Git must be installed; sign in when VS Code prompts you.
@@ -109,8 +111,8 @@ Replace files in place where possible: keep the filename, folder, format, image 
 
 ## Guides · 详细说明
 
-- [Website Function Guide · 网站功能说明 (Word)](docs/网站功能说明.docx) — page controls and feature walkthrough / 页面控件与功能说明
-- [Team Collaboration and Asset Guide · 团队协作与素材替换说明 (Word)](docs/团队协作与素材替换说明.docx) — GitHub, VS Code, local preview, and asset replacement / GitHub、VS Code、本地预览和素材替换
+- [Website Function Guide · 网站功能说明 (Word)](docs/WEBSITE_GUIDE.md) — page controls and feature walkthrough / 页面控件与功能说明
+- [Team Collaboration and Asset Guide · 团队协作与素材替换说明 (Word)](docs/TEAM_GUIDE.md) — GitHub, VS Code, local preview, and asset replacement / GitHub、VS Code、本地预览和素材替换
 - [Product specification · 产品功能文档](SPEC.md)
 
 ## Saving and sharing · 保存与分享
