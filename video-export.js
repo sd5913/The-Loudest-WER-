@@ -7,7 +7,7 @@
  dialog.innerHTML='<div class="titlebar lavender"><span>pet_performance.video</span><button type="button" class="plain" id="closeVideoExport" aria-label="Close video export">×</button></div><div class="dialog-body video-export-body"><h2>Your little music video</h2><p>Your stage, pets and music in one video. Everything is created on this device.</p><label class="video-length-label" for="videoLoops">Performance length<select id="videoLoops"><option value="1">1 round</option><option value="2">2 rounds</option><option value="4">4 rounds</option></select></label><canvas id="videoStagePreview" width="1280" height="540" aria-label="Music video stage preview"></canvas><video id="videoResult" controls playsinline hidden></video><p id="videoExportStatus" role="status" aria-live="polite">Choose a length, then create your video.</p><progress id="videoExportProgress" max="1" value="0" hidden aria-label="Video export progress"></progress><div class="video-export-actions"><button type="button" class="primary" id="startVideoExport">Create video</button><button type="button" class="soft" id="cancelVideoExport" hidden>Cancel</button><a id="downloadVideo" class="soft" hidden>Download video</a></div><small>MP4 when supported; otherwise WebM. Keep this tab open while recording.</small></div>';
  document.body.append(dialog);
  const canvas=q('#videoStagePreview'),ctx=canvas.getContext('2d'),status=q('#videoExportStatus');
- let sceneSnapshot=null,active=null,previewUrl='';
+ let sceneSnapshot=null,active=null,previewUrl='',previewRequest=0;
  const loadImage=async src=>{const image=new Image();image.src=src;await image.decode();return image};
  async function snapshotStage(){
   const stage=q('#stage').getBoundingClientRect();
@@ -55,10 +55,16 @@
  q('#closeVideoExport').addEventListener('click',()=>{cancel();q('#videoResult').pause();dialog.close()});
  dialog.addEventListener('cancel',()=>{cancel();q('#videoResult').pause()});
  trigger.addEventListener('click',async()=>{
+  const request=++previewRequest;
+  sceneSnapshot=null;
+  q('#startVideoExport').disabled=true;
   if(playing)await togglePlay();
   dialog.showModal();status.textContent='Preparing your stage…';q('#videoResult').hidden=true;canvas.hidden=false;q('#downloadVideo').hidden=true;
-  try{sceneSnapshot=await snapshotStage();drawStage();for(const option of q('#videoLoops').options){const n=Number(option.value);option.textContent=n+' round'+(n>1?'s':'')+' · about '+Math.round(sceneSnapshot.steps*60/sceneSnapshot.bpm*n)+'s';}status.textContent='Ready. Create a video with your current stage and music.';}
-  catch(error){sceneSnapshot=null;status.textContent='Stage preview unavailable: '+error.message;}
+  try{
+   const snapshot=await snapshotStage();
+   if(request!==previewRequest||!dialog.open)return;
+   sceneSnapshot=snapshot;drawStage();for(const option of q('#videoLoops').options){const n=Number(option.value);option.textContent=n+' round'+(n>1?'s':'')+' · about '+Math.round(sceneSnapshot.steps*60/sceneSnapshot.bpm*n)+'s';}q('#startVideoExport').disabled=false;status.textContent='Ready. Create a video with your current stage and music.';}
+  catch(error){if(request===previewRequest&&dialog.open)status.textContent='Stage preview unavailable: '+error.message;}
  });
  q('#startVideoExport').addEventListener('click',async()=>{
   if(active||!sceneSnapshot)return;
