@@ -29,7 +29,7 @@
   document.querySelector('#aiSongDestination').hidden=task!=='song';
   document.querySelectorAll('[data-ai-task]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.aiTask===task)));
  }
- function showView(){
+ function showView(event){
   const route=location.hash.slice(1);
   const view=['ai','manual'].includes(route)?route:'choose';
   if(playing&&view!=='manual')togglePlay();
@@ -39,6 +39,10 @@
   if(view==='manual'){setStudioMode('advanced');renderComposer()}
   if(view==='ai')updatePets();
   document.title=(view==='choose'?'Choose Your Mode':view==='ai'?'AI Generate':'Manual Compose')+' — The Loudest WER!';
+  if(event){
+   const headingId={choose:'entryTitle',ai:'aiTitle',manual:'manualTitle'}[view];
+   document.getElementById(headingId).focus({preventScroll:true});
+  }
   window.scrollTo({top:0,behavior:'instant'});
  }
  document.querySelectorAll('[data-flow]').forEach(b=>b.addEventListener('click',()=>{location.hash=b.dataset.flow==='choose'?'choose':b.dataset.flow}));

@@ -1,5 +1,5 @@
-.creation-steps{display:flex;gap:24px;flex-wrap:wrap;grid-column:1/-1;padding:0 0 22px;margin-bottom:10px;border-bottom:1px solid #6f527d}
-.creation-steps a{display:flex;gap:9px;align-items:center;color:#f0bddf;text-decoration:none;font-size:14px}.creation-steps span{color:#e4d4e9}
+.creation-steps{display:flex;gap:4px 20px;flex-wrap:wrap;grid-column:1/-1;padding:0 0 12px;margin-bottom:10px;border-bottom:1px solid #6f527d}
+.creation-steps a{min-height:44px;display:flex;gap:9px;align-items:center;color:#f0bddf;text-decoration:none;font-size:14px}.creation-steps span{color:#e4d4e9}
 #chooseSound,#makePattern,#listenSave{scroll-margin-top:210px}
 .studio-page .sound-source> b{font-size:17px!important;display:block;margin-bottom:18px}
 .studio-page .sound-source #voicePicker{margin:12px 0;padding:14px!important;background:transparent;border:0;box-shadow:none}
@@ -27,12 +27,12 @@
 .studio-page .band-section .track-steps button::before{content:none!important}
 .studio-page .band-section .track-steps button::after{content:none!important}
 .studio-page .band-section .track-steps button.current::after{content:''!important;position:absolute;bottom:-7px;left:20%;right:20%;height:3px;background:#ffe0a4}
-.studio-page .band-section .track-steps button.edit-target{outline:none!important}
+.studio-page .band-section .track-steps button.edit-target:not(:focus-visible){outline:none!important}
 .rhythm-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px}.rhythm-actions button{min-height:38px;font-size:12px;padding:8px 12px}.rhythm-actions #allTracks{margin-left:auto;color:#d2afd9}
 .studio-page .band-section .track-help{margin-top:8px}.studio-page .band-section .section-heading{margin-bottom:14px}
 .studio-page .more-sound{margin-top:0}.studio-page .editor-tabs[hidden]{display:none!important}
 .studio-page .solfege-panel{grid-column:1/-1}.studio-page .bottom-row>p{font-size:17px;color:#fff0d6}
-@media(max-width:650px){.creation-steps{gap:14px}.creation-steps a{font-size:12px}.studio-page .band-section .track-steps{gap:3px!important}.studio-page .band-section .track-steps button{height:34px!important}.studio-page .band-section .track-steps button:nth-child(4n):not(:last-child){margin-right:4px!important}.rhythm-actions #allTracks{margin-left:0}}
+@media(max-width:650px){.creation-steps{gap:0 12px}.creation-steps a{font-size:12px}.studio-page .band-section .track-steps{gap:3px!important}.studio-page .band-section .track-steps button{height:34px!important}.studio-page .band-section .track-steps button:nth-child(4n):not(:last-child){margin-right:4px!important}.rhythm-actions #allTracks{margin-left:0}}
 /* A full-width, flatter volume control beneath the pattern editor. */
 .studio-page .pet-mixer .sound-panel .basic-volume{grid-column:1/-1;width:100%;min-width:0;margin:0!important;padding:16px 22px!important}
 .studio-page .pet-mixer .basic-volume label{font-size:17px!important;margin:0 0 8px!important;line-height:1.4}
@@ -67,3 +67,58 @@
 /* Track Loop applies to both arrangement tabs. */
 .studio-page .pet-mixer .sound-composition>.rhythm-loop.control{margin:0 0 18px!important;justify-content:flex-start;width:100%}
 .studio-page .sound-composition>.rhythm-loop small{text-align:left}
+
+/* Keep the listen, save and export controls in reading order at every width. */
+.studio-page #listenSave {
+  flex-direction: row;
+  align-items: flex-start;
+}
+.studio-page .save-cluster {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+.save-actions, .save-messages {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+.studio-page .save-actions :is(button, a) {
+  font-family: var(--wer-heading-font);
+  font-size: 14px;
+}
+.studio-page .save-actions .soft, .studio-page #listenSave .surprise {
+  background: #392849;
+  border-color: #a47cb4;
+}
+.save-actions a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: #f3c7e8;
+  text-underline-offset: 3px;
+}
+.studio-page #listenSave .surprise {
+  width: auto;
+  min-height: 44px;
+}
+.studio-page .save-messages small {
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: left;
+}
+.studio-page :is(.creation-steps a, .sound-details summary, .track-steps button):focus-visible {
+  outline: 3px solid #ffdc91;
+  outline-offset: 2px;
+}
+.studio-page :is(.save-actions, .rhythm-actions, .band-section) button:disabled {
+  opacity: .6;
+  cursor: default;
+  filter: none;
+}
+@media (max-width: 650px) {
+  .studio-page .save-cluster, .save-actions { width: 100%; }
+  .save-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .save-actions a { justify-self: start; }
+}

@@ -7,18 +7,50 @@
 .studio-entry .titlebar,.ai-creation .titlebar{padding:17px 24px;min-height:54px}
 .entry-body,.ai-creation-body{padding:48px}
 .entry-body h1,.ai-creation-body h1{font:700 clamp(28px,4vw,42px)/1.2 Georgia,serif;color:#fff0d6;margin:16px 0}
-.entry-body>.eyebrow,.ai-creation-body>.eyebrow{font:12px 'Courier New',monospace;letter-spacing:2px;color:#e3b4df}
-.entry-intro,.ai-creation-body>p{font-size:16px;line-height:1.7;color:#ccb6d6}
-.creation-choices{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:34px 0}
-.creation-choice{display:flex!important;flex-direction:column;align-items:flex-start;gap:16px;text-align:left;padding:30px!important;min-height:310px;background:linear-gradient(145deg,#53315f,#30203f)!important;border:2px solid #ba82c5!important;color:#f9e8db!important;box-shadow:5px 5px #100a1b;transition:transform .15s,border-color .15s}
-.creation-choice:last-child{background:linear-gradient(145deg,#333053,#26203d)!important;border-color:#9284bc!important}
-.creation-choice:hover{transform:translateY(-4px);border-color:#ffda99!important}
-.choice-icon{font-size:42px;line-height:1;color:#ffda99}.choice-kicker{font:10px 'Courier New',monospace;letter-spacing:1.5px;color:#e5bade}
-.creation-choice strong{font:700 27px Georgia,serif}.creation-choice>span:not(.choice-icon):not(.choice-kicker){font-size:14px;line-height:1.8;color:#dcc7e4}.creation-choice>b{font-size:14px;margin-top:auto;color:#ffdfa1}
-.entry-footnote{font-size:12px;color:#bca7ca;line-height:1.7}.ai-task-tabs{display:flex;gap:12px;margin:28px 0}.ai-task-tabs button{min-height:48px;padding:12px 24px;font-size:15px}.ai-task-tabs [aria-pressed="true"]{background:#79438d;border:2px solid #e7a6db;color:#fff0d6}
+.ai-creation-body>.eyebrow{font:12px 'Courier New',monospace;letter-spacing:2px;color:#e3b4df}
+.ai-creation-body>p{font-size:16px;line-height:1.7;color:#ccb6d6}
+.creation-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin: 24px 0;
+}
+.creation-choice {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 24px;
+  text-align: left;
+  color: #fff0d6;
+  background: #462c54;
+  border: 2px solid #ba82c5;
+  box-shadow: 4px 4px #100a1b;
+}
+.creation-choice[data-flow="manual"] {
+  background: #302b49;
+  border-color: #9284bc;
+}
+.creation-choice:is(:hover, :focus-visible) {
+  border-color: #ffdc91;
+}
+.creation-choice:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px #100a1b;
+}
+.choice-icon { font-size: 32px; line-height: 1; color: #ffda99; }
+.creation-choice span:last-child { color: #e4d3e9; font: 400 15px/1.5 Arial, sans-serif; }
+.entry-footnote { margin: 0; font-size: 13px; line-height: 1.5; color: #cfbdd8; }
+.studio-page .scene-rail [data-flow="choose"] {
+  width: auto;
+  min-height: 44px;
+  margin: 0;
+  padding: 8px 14px;
+  background: #382547;
+}
+.ai-task-tabs{display:flex;gap:12px;margin:28px 0}.ai-task-tabs button{min-height:48px;padding:12px 24px;font-size:15px}.ai-task-tabs [aria-pressed="true"]{background:#79438d;border:2px solid #e7a6db;color:#fff0d6}
 .ai-pet-label{display:flex;align-items:center;gap:20px;margin:0 0 20px;font-size:14px;color:#ddc3e2}.ai-pet-label select{min-height:44px;min-width:160px}
-.ai-creation .ai-sample-panel{margin:0;width:100%;padding:26px;background:#362246;border:2px solid #9b6bb0}.ai-creation .ai-sample-panel p{font-size:14px;line-height:1.7}.ai-creation .ai-sample-panel input:not([type=checkbox]):not([type=range]),.ai-creation .ai-sample-panel select,.ai-creation textarea{width:100%;min-height:48px;font-size:16px}.ai-creation textarea{padding:14px}.ai-creation .ai-sample-panel label{font-size:14px}.ai-creation .ai-sample-panel button{min-height:48px;font-size:15px}.ai-creation .ai-song-options select{width:auto!important}.ai-next{display:flex;justify-content:space-between;gap:24px;align-items:center;margin-top:28px;border-top:1px solid #765183;padding-top:24px}.ai-next p{font-size:12px;line-height:1.7;color:#bca7ca;max-width:330px}.ai-next button{min-height:48px;font-size:14px;padding:12px 24px}.manual-mode-label{color:#ffdfa1;font-size:14px}
-@media(max-width:700px){.entry-body,.ai-creation-body{padding:24px}.creation-choices{grid-template-columns:1fr;gap:18px}.creation-choice{min-height:270px;padding:24px!important}.ai-next{align-items:stretch;flex-direction:column;gap:10px}.ai-task-tabs button{flex:1;padding:10px}.ai-pet-label{align-items:stretch;flex-direction:column;gap:10px}}
+.ai-creation .ai-sample-panel{margin:0;width:100%;padding:26px;background:#362246;border:2px solid #9b6bb0}.ai-creation .ai-sample-panel p{font-size:14px;line-height:1.7}.ai-creation .ai-sample-panel input:not([type=checkbox]):not([type=range]),.ai-creation .ai-sample-panel select,.ai-creation textarea{width:100%;min-height:48px;font-size:16px}.ai-creation textarea{padding:14px}.ai-creation .ai-sample-panel label{font-size:14px}.ai-creation .ai-sample-panel button{min-height:48px;font-size:15px}.ai-creation .ai-song-options select{width:auto!important}.ai-next{display:flex;justify-content:space-between;gap:24px;align-items:center;margin-top:28px;border-top:1px solid #765183;padding-top:24px}.ai-next p{font-size:12px;line-height:1.7;color:#bca7ca;max-width:330px}.ai-next button{min-height:48px;font-size:14px;padding:12px 24px}
+@media(max-width:700px){.entry-body,.ai-creation-body{padding:24px}.creation-choices{grid-template-columns:1fr;gap:12px}.creation-choice{grid-template-columns:28px 1fr;align-items:center;gap:8px 12px;padding:16px}.choice-icon{font-size:24px}.creation-choice span:last-child{grid-column:2}.ai-next{align-items:stretch;flex-direction:column;gap:10px}.ai-task-tabs button{flex:1;padding:10px}.ai-pet-label{align-items:stretch;flex-direction:column;gap:10px}}
 .sound-composition{grid-column:1/-1;min-width:0;margin:4px 0 20px;border:2px solid #8e639f;background:#241a36;padding:18px}
 .studio-page .sound-composition .compose-tabs{display:flex!important;gap:10px;margin:0 0 20px!important;padding:0;flex-wrap:wrap}
 .sound-composition .compose-tabs button{flex:1;min-height:48px;padding:12px 20px;font-size:16px}
