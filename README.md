@@ -166,3 +166,5 @@ Music, adopted pets, and custom pet details are stored in this browser only. **S
 
 · Tao Xinyan：宠物视频反应。✅️
 
+
+The optional team Worker serves the public Studio and protects paid generation with Cloudflare Access. [Student setup, tests and rollback](docs/WORKER.md).

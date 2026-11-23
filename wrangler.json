@@ -1,0 +1,20 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "loudest-wer-worker",
+  "main": "worker/index.mjs",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "preview_urls": false,
+  "assets": {
+    "directory": "./.worker-assets",
+    "binding": "ASSETS",
+    "html_handling": "none",
+    "run_worker_first": ["/api/*"]
+  },
+  "secrets": { "required": ["ELEVENLABS_API_KEY"] },
+  "ratelimits": [{
+    "name": "GENERATION_LIMITER",
+    "namespace_id": "591301",
+    "simple": { "limit": 2, "period": 60 }
+  }]
+}
