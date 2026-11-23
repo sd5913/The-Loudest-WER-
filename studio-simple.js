@@ -4,8 +4,15 @@
  const guide=document.createElement('nav');guide.className='creation-steps';guide.setAttribute('aria-label','Manual creation steps');
  guide.innerHTML='<a href="#chooseSound">1 <span>Choose a sound</span></a><a href="#makePattern">2 <span>Make a pattern</span></a><a href="#listenSave">3 <span>Listen & save</span></a>';
  // Step links scroll inside the manual view without changing the mode route.
- guide.querySelectorAll('a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();q(a.getAttribute('href')).scrollIntoView({behavior:'smooth',block:'start'})}));
- mixer.prepend(guide);source.id='chooseSound';composition.id='makePattern';q('.bottom-row').id='listenSave';
+ guide.querySelectorAll('a').forEach(link => link.addEventListener('click', event => {
+  event.preventDefault();
+  const target = q(link.hash);
+  const heading = target.querySelector('h2');
+  heading.tabIndex = -1;
+  heading.focus({preventScroll:true});
+  target.scrollIntoView({block:'start'});
+ }));
+ mixer.prepend(guide);source.id='chooseSound';composition.id='makePattern';
  const soundTitle=document.createElement('h2');soundTitle.className='step-title';soundTitle.textContent='1 · Choose a sound';source.querySelector('b').replaceWith(soundTitle);
  const voice=q('#voicePicker');source.querySelector('.source-actions').after(voice);
  const instrument=q('#instrumentPicker');source.append(instrument);
@@ -44,10 +51,7 @@
  function setPattern(clear){const p=pets.find(p=>p.id===selected);if(!p)return;p.clipRepeats=1;p.steps=clear?[]:Array.from({length:stepCount()/4},(_,i)=>i*4);p.notes={};p.muted=false;focusBeat=0;render();scheduleDraftSave()}
  q('#simpleBeat').addEventListener('click',()=>setPattern(false));q('#clearBeat').addEventListener('click',()=>setPattern(true));
  q('#previewBeat').addEventListener('click',()=>{const p=pets.find(p=>p.id===selected);if(p)sound(p)});
- const saveTitle=document.createElement('h2');saveTitle.className='step-title';saveTitle.textContent='3 · Listen & save';q('.bottom-row>p').replaceWith(saveTitle);
- const collection=document.createElement('a');collection.href='collection.html';collection.className='plain';collection.textContent='My Collection →';q('.save-cluster').append(collection);
- q('#localSaveStatus').textContent='Saves stay in this browser';
- const listen=document.createElement('button');listen.type='button';listen.id='listenTogether';listen.className='primary';listen.textContent='Play together';listen.addEventListener('click',()=>q('#play').click());q('.save-cluster').prepend(listen);
+ q('#listenTogether').addEventListener('click',()=>q('#play').click());
  const hints={rhythm:'Choose when your pet sounds.',melody:'Choose the notes your pet sings.'};
  const renderBefore=render;
  render=function(){renderBefore();refreshSimple()};
