@@ -152,6 +152,7 @@ body[data-time="sunset"] .room-pet-art.sunset-art, body[data-time="night"] .room
 .song-info > small { color:#e99edf; font:8px 'Courier New',monospace; }
 .song-info h2 { margin:8px 0; color:#fff1d8; font:19px Georgia,serif; }
 .song-info p { margin:0; color:#bbaad2; font-size:9px; }
+.song-info p.song-description { margin-top:5px; color:#f1d4e9; line-height:1.45; }
 .song-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; align-items:center; gap:7px; }
 .song-actions a, .song-actions button { padding:8px; color:#ffe5f8; font-size:9px; text-decoration:none; }
 .empty-collection { display:grid; justify-items:center; gap:10px; padding:55px 20px; color:#c8b5dc; background:linear-gradient(140deg,#211735,#151128); border:2px dashed #654d89; text-align:center; }
@@ -322,3 +323,17 @@ body.home-page footer { border-top:0; }
 .stage { aspect-ratio:395/223; }
 #stage .scene-art.loaded { filter:none !important; }
 #stage .mic { display:none; }
+
+/* Select a pet first to reveal its editing and removal actions. */
+.library-pet{position:relative;flex-wrap:wrap;cursor:pointer;transition:border-color .16s,box-shadow .16s,background .16s}
+.library-pet.selected{border-color:#ffb3e5;background:linear-gradient(135deg,#442555,#211832);box-shadow:0 0 0 2px #ef91d56e,0 0 15px #e973c45c,3px 3px 0 #090611}
+.library-pet .library-pet-info{flex:1;min-width:100px}
+.library-pet .pet-select{align-self:center;padding:8px 11px;border:1px solid #9c70b9;background:#38234e;color:#d9c1e8;font:10px 'Courier New',monospace;cursor:pointer}
+.library-pet .pet-select.active{border:2px solid #ffe16a;background:linear-gradient(110deg,#963fbd,#bd4c9e);color:#fff8ed;box-shadow:0 0 0 2px #f5a6df42,0 0 12px #ef81d4a3;font-weight:700}
+.library-pet .pet-card-actions{display:flex;flex:1 0 100%;justify-content:flex-end;align-items:center;gap:9px;padding-top:9px;border-top:1px solid #604879}
+.library-pet .pet-card-actions button,.library-pet .pet-card-actions a{padding:7px 10px;border:1px solid #8e69a8;background:#3b2853;color:#f3dff5;font:10px 'Courier New',monospace;text-decoration:none;white-space:nowrap}
+.library-pet .pet-card-actions .danger{color:#ffb8d0;border-color:#a95d82;background:#49243e}
+.pet-form-actions{display:flex;gap:10px;align-items:center}
+.pet-form-actions #savePetButton{flex:1}
+.pet-form-actions #cancelPetEdit{font-size:11px}
+@media(max-width:760px){.library-pet{gap:8px;padding:9px}.library-pet .pet-card-actions{justify-content:flex-start;flex-wrap:wrap}.library-pet .pet-select{padding:7px 8px}}

@@ -6,8 +6,9 @@ const petTypes = [
   {id:'frog',name:'Mallow',kind:'Frog',role:'A bouncy little boop',color:'#8eaa85',light:'#cee0a9',dark:'#617c70',wave:'triangle',base:440,emoji:'♫'},
   {id:'fox',name:'Peach',kind:'Fox',role:'A curious high note',color:'#d28b71',light:'#f3c39b',dark:'#81596a',wave:'triangle',base:587.33,emoji:'✧'}
 ];
-petTypes.splice(0,3, ...WERStore.starters);
-petTypes.push(...WERStore.defaultPets,...WERStore.getPets().map(p=>({...p,kind:p.kind||'Custom',wave:p.wave||'triangle',base:p.base||440})));
+const catalogPets=WERStore.getCatalogPets();
+petTypes.splice(0,3, ...catalogPets.slice(0,3));
+petTypes.push(...catalogPets.slice(3),...WERStore.getPets().map(p=>({...p,kind:p.kind||'Custom',wave:p.wave||'triangle',base:p.base||440})));
 const templates = [
   {name:'Sunset stroll',tempo:92,steps:{cat:[0,4,8,12],'ghost-cat':[2,6,10,14],'bat-cat':[0,3,5,8,11,13]}},
   {name:'Seaside swing',tempo:116,steps:{cat:[0,3,4,7,8,11,12,15],'ghost-cat':[2,6,10,14],'bat-cat':[1,3,5,7,9,11,13,15]}},
@@ -54,6 +55,7 @@ function trimOnset(buffer){
  return {buffer:trimmed,peak};
 }
 function useCustomVoice(p,buffer,name){
+ p.aiPerformance='voice';
  if(!buffer.duration||buffer.duration>12)throw new Error('Please use a recording under 12 seconds');
  const prepared=trimOnset(buffer);
  customBuffers.set(p.id,prepared.buffer);
@@ -104,7 +106,7 @@ window.petTypes=petTypes;window.petSvg=id=>window.spriteSvg(petTypes.find(p=>p.i
 
 function sprite(p){const src=p.image||`assets/pets/${p.asset||p.id}.png`;return `<img class="pet-png" src="${src}" alt="${html(p.name)}" onload="this.dataset.fallback=''" onerror="if(this.dataset.fallback){this.outerHTML=window.petSvg('${p.asset||p.id}')}else{this.dataset.fallback='1';this.src='${src}'}">`;}
 function render(){
- const switches=$('#mixerPetSwitcher');if(switches)switches.innerHTML=pets.map(p=>`<button type="button" data-mixer-pet="${html(p.id)}" aria-pressed="${p.id===selected}" class="${p.id===selected?'active':''}">${sprite(p)}<span>${html(p.name)}</span></button>`).join('');
+ const switches=$('#mixerPetSwitcher');if(switches)switches.innerHTML=pets.map(p=>`<div class="mixer-pet-item"><button type="button" data-mixer-pet="${html(p.id)}" aria-pressed="${p.id===selected}" class="${p.id===selected?'active':''}">${sprite(p)}<span>${html(p.name)}</span></button><button type="button" class="mixer-pet-remove" data-remove="${html(p.id)}" aria-label="Remove ${html(p.name)} from this band" title="Remove from this band · stays in My Pets" ${pets.length<=1||positioning?'disabled':''}>×</button></div>`).join('');
  focusBeat=clamp(focusBeat,0,stepCount()-1);
  if(focusBeat<pageStart()||focusBeat>=pageStart()+16)focusBeat=pageStart();
  $('#soloBeat').innerHTML=`♪ Only beat ${focusBeat+1}`;
@@ -145,8 +147,8 @@ function captureSession(){
   aiSongPrompt:$('#aiSongPrompt').value,aiSongDuration:$('#aiSongDuration').value,
   aiSongInstrumental:$('#aiSongInstrumental').checked,aiSamplePrompt:$('#aiSoundPrompt').value,
   ...getComposerSaveState(),
-  pets:pets.map(({id,name,volume,pitch,tone,strength,echo,repeat,muted,steps,notes,source,instrument,customAudioData,audioData,customVoiceName,customLevel,kind,asset,image,sampleId,sampleFile,base,wave,custom,clipStart,clipEnd,clipRepeats})=>
-   ({id,name,volume,pitch,tone,strength,echo,repeat,muted,steps:[...steps],notes:notes?{...notes}:{},source:source||'voice',instrument:instrument||'piano',customAudioData:customAudioData||audioData||'',customVoiceName:customVoiceName||'My uploaded voice',customLevel,kind,asset,image,sampleId,sampleFile,base,wave,custom,clipStart:clipStart||0,clipEnd:clipEnd??1,clipRepeats:clipRepeats||1}))};
+  pets:pets.map(({id,name,volume,pitch,tone,strength,echo,repeat,muted,steps,notes,source,instrument,customAudioData,audioData,customVoiceName,customLevel,kind,asset,image,sampleId,sampleFile,base,wave,custom,aiPerformance,clipStart,clipEnd,clipRepeats})=>
+   ({id,name,volume,pitch,tone,strength,echo,repeat,muted,steps:[...steps],notes:notes?{...notes}:{},source:source||'voice',instrument:instrument||'piano',customAudioData:customAudioData||audioData||'',customVoiceName:customVoiceName||'My uploaded voice',customLevel,kind,asset,image,sampleId,sampleFile,base,wave,custom,aiPerformance,clipStart:clipStart||0,clipEnd:clipEnd??1,clipRepeats:clipRepeats||1}))};
 }
 function restoreSession(saved){
  if(!Array.isArray(saved?.pets))return false;
@@ -178,7 +180,7 @@ function playSynthClip(p,t,rate){
  source.connect(gain);connectOutput(gain,p);
  source.start(t,range.start,range.duration);source.stop(t+duration+.01);animate(p.id);return true;
 }
-function sound(p,time=0,noteOffset=0){if(!context||context.state==='closed')return;const t=Math.max(context.currentTime+.005,time),rate=2**((p.pitch+noteOffset)/12);if(p.source==='instrument'&&playInstrument(p,t,noteOffset))return;if(p.tone==='custom'&&customBuffers.has(p.id)){const source=context.createBufferSource(),high=context.createBiquadFilter(),shape=context.createWaveShaper(),low=context.createBiquadFilter(),gain=context.createGain();source.buffer=customBuffers.get(p.id);source.playbackRate.setValueAtTime(rate,t);high.type='highpass';high.frequency.setValueAtTime(170,t);shape.curve=digitalCurve;shape.oversample='2x';low.type='lowpass';low.frequency.setValueAtTime(2800,t);const range=clipRange(p,source.buffer),duration=range.duration/rate,level=Math.max(.001,p.volume/100*.24*(customLevels.get(p.id)||1)*((p.strength??70)/100*.7+.3)),attack=Math.min(.018,duration*.22),fade=Math.min(.045,duration*.4);gain.gain.setValueAtTime(.0001,t);gain.gain.linearRampToValueAtTime(level,t+attack);gain.gain.setValueAtTime(level,t+Math.max(attack,duration-fade));gain.gain.linearRampToValueAtTime(0,t+duration);source.connect(high).connect(shape).connect(low).connect(gain);connectOutput(gain,p);source.start(t,range.start,range.duration);source.stop(t+duration+.01);animate(p.id);return}if(p.tone==='meow'&&singingBuffer){
+function sound(p,time=0,noteOffset=0){if(p.aiPerformance==='music'){animate(p.id);return}if(!context||context.state==='closed')return;const t=Math.max(context.currentTime+.005,time),rate=2**((p.pitch+noteOffset)/12);if(p.source==='instrument'&&playInstrument(p,t,noteOffset))return;if(p.tone==='custom'&&customBuffers.has(p.id)){const source=context.createBufferSource(),high=context.createBiquadFilter(),shape=context.createWaveShaper(),low=context.createBiquadFilter(),gain=context.createGain();source.buffer=customBuffers.get(p.id);source.playbackRate.setValueAtTime(rate,t);high.type='highpass';high.frequency.setValueAtTime(170,t);shape.curve=digitalCurve;shape.oversample='2x';low.type='lowpass';low.frequency.setValueAtTime(2800,t);const range=clipRange(p,source.buffer),duration=range.duration/rate,level=Math.max(.001,p.volume/100*.24*(customLevels.get(p.id)||1)*((p.strength??70)/100*.7+.3)),attack=Math.min(.018,duration*.22),fade=Math.min(.045,duration*.4);gain.gain.setValueAtTime(.0001,t);gain.gain.linearRampToValueAtTime(level,t+attack);gain.gain.setValueAtTime(level,t+Math.max(attack,duration-fade));gain.gain.linearRampToValueAtTime(0,t+duration);source.connect(high).connect(shape).connect(low).connect(gain);connectOutput(gain,p);source.start(t,range.start,range.duration);source.stop(t+duration+.01);animate(p.id);return}if(p.tone==='meow'&&singingBuffer){
  const source=context.createBufferSource(),filter=context.createBiquadFilter(),gain=context.createGain();
  source.buffer=singingBuffer;
  const target=(p.base||440)*rate*2,singingRate=Math.max(.5,Math.min(4,target/520));
@@ -377,6 +379,7 @@ $('#pitch').addEventListener('change',async()=>{
 $('#mute').addEventListener('click',()=>{const p=pets.find(a=>a.id===selected);p.muted=!p.muted;render()});$('#remove').addEventListener('click',()=>removeFromStage(selected));
 $('#add').addEventListener('click',()=>{if(pets.length<6)$('#picker').showModal()});$('#closePicker').addEventListener('click',()=>$('#picker').close());$('#choices').addEventListener('click',e=>{const b=e.target.closest('[data-add]');if(!b)return;const base=petTypes.find(p=>p.id===b.dataset.add);pets.push({...base,volume:50,pitch:0,tone:base.audioData?'custom':'signature',strength:70,echo:0,repeat:'loop',muted:false,steps:[0,8]});selected=base.id;$('#picker').close();render()});
 $('#random').addEventListener('click',()=>{
+ if(!window.confirm('Replace this arrangement? This changes every pet’s rhythm, pitch and volume, and the song tempo. Save your current music first if you want to keep it.'))return;
  currentTemplate=Math.floor(Math.random()*templates.length);
  const t=templates[currentTemplate];
  $('#tempo').value=t.tempo;
@@ -525,4 +528,4 @@ $('.workspace').addEventListener('input',event=>{if(event.target.matches('input,
 $('.workspace').addEventListener('change',event=>{if(event.target.matches('input,textarea,select'))scheduleDraftSave()});
 window.addEventListener('pagehide',()=>{if(draftTimer)saveDraftNow()});
 
-$('#mixerPetSwitcher').addEventListener('click',e=>{const b=e.target.closest('[data-mixer-pet]');if(b){selected=b.dataset.mixerPet;render();}});
+$('#mixerPetSwitcher').addEventListener('click',e=>{const remove=e.target.closest('[data-remove]');if(remove){removeFromStage(remove.dataset.remove);return;}const b=e.target.closest('[data-mixer-pet]');if(b){selected=b.dataset.mixerPet;render();}});

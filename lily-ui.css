@@ -70,3 +70,9 @@ body.home-page .home-lower{display:none!important}
 .studio-page .stage{width:100%!important;max-width:100%!important;min-width:0!important}
 .studio-page .stage .scene-tile{min-width:0!important;max-width:none!important;flex:0 0 48px!important}
 @media(max-width:850px){.studio-page .topbar .layout-tools{position:absolute;right:14px;top:14px}.studio-page .stage .scene-tile{width:44px!important;height:44px!important;flex:0 0 44px!important}}
+
+/* Pet controls in the current band. */
+.mixer-pet-item{display:flex;align-items:stretch;gap:3px}
+.mixer-pet-switcher .mixer-pet-remove{padding:4px 9px;min-width:30px;justify-content:center;color:#ffc3d8;background:#42263f;font-size:20px}
+.mixer-pet-switcher .mixer-pet-remove:disabled{opacity:.35;cursor:not-allowed}
+.surprise span{display:block;font-size:11px;line-height:1.5;white-space:normal}
