@@ -8,6 +8,7 @@ function exportConnect(node,pet,mix,offline){
  }
 }
 function exportVoice(p,when,offset,mix,offline){
+ if(p.aiPerformance==='music')return;
  const strength=(p.strength??70)/100*.7+.3;
  let buffer,rate=2**(((p.pitch||0)+offset)/12),level,range,filter=null;
  if(p.source==='instrument'){
