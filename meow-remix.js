@@ -63,18 +63,27 @@ function makeMeowArrangement(buffer, style, sections) {
  for (let section = 0; section < sections; section++) {
   style.beats.forEach((beat, i) => {
    const last = i === style.beats.length - 1;
-   notes[section * 16 + beat] = last ? 7 : motif[i % motif.length];
+   const row = motif[i % motif.length];
+   // Keep the hook recognizable and lift the final repeat over the bass entrance.
+   const lift = section > 0 && i >= style.beats.length - 4 ? 2 : 0;
+   notes[section * 16 + beat] = last ? 7 : Math.max(1, row - lift);
   });
  }
  return {notes, root: voiced?.pitch, clipStart: slice.start / samples.length,
   clipEnd: (slice.start + length) / samples.length};
 }
 
+const meowRemixStatus = $('#meowRemixStatus');
+const playMeowRemix = $('#playMeowRemix');
+
+playMeowRemix.addEventListener('click', () => $('#play').click());
+
 $('#generateMeowRemix').addEventListener('click', () => {
  const pet = pets.find(item => item.id === selected);
  const buffer = pet && customBuffers.get(pet.id);
  if (!buffer) {
-  notify('Upload or record a short call for this pet first.');
+  playMeowRemix.hidden = true;
+  meowRemixStatus.textContent = 'Upload or record a short call for this pet first.';
   return;
  }
  const style = meowStyles[$('#meowStyle').value];
@@ -97,7 +106,9 @@ $('#generateMeowRemix').addEventListener('click', () => {
  composerMode = 'melody';
  render();
  scheduleDraftSave();
- setStudioHint('Remix ready. Press Play together to hear your pet and its backing.');
+ meowRemixStatus.textContent = `Song ready! ${pet.name} sings an eight-bar remix.`;
+ playMeowRemix.hidden = false;
+ notify('Meow song generated successfully');
 });
 
 $('#meowBacking').addEventListener('change', event => {
