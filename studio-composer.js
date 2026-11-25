@@ -93,20 +93,22 @@ const backingProfiles = {
  house: {kick:[0,1,2,3], snare:[1,3], hat:.5, wave:'triangle', bass:[1,3], chordOffset:.5},
  swing: {kick:[0,2], snare:[1,3], hat:.67, wave:'sine', bass:[0,1,2,3], chordOffset:.16, seventh:true},
  rock: {kick:[0,2,3], snare:[1,3], hat:.5, wave:'sawtooth', bass:[0,1,2,3], powerChord:true},
- trap: {kick:[0,3], snare:[2], hat:.5, wave:'triangle', bass:[0,3], hatRoll:true}
+ trap: {kick:[0,3], snare:[2], hat:.5, wave:'triangle', bass:[0,3], hatRoll:true},
+ punk: {kick:[0,2], snare:[1,3], hat:.5, wave:'sawtooth', bass:[0,1,2,3], powerChord:true}
 };
 const remixRhythms = {
  mellow: {pickup:[3], hats:[.50,.76], keys:[2]},
  bright: {pickup:[1,3], hats:[0,.50], keys:[1,3]},
- disco: {pickup:[1,3], hats:[.25,.50,.75], keys:[0,1,2,3]},
- dub: {pickup:[0,2], hats:[.33,.67], keys:[1,2,3]},
+ disco: {pickup:[1,3], hats:[.25,.50,.75], keys:[0,1,2,3], ghost:[1.75,3.75]},
+ dub: {pickup:[0,2], hats:[.33,.67], keys:[1,2,3], ghost:[3.5]},
  arcade: {pickup:[0,1,3], hats:[0,.25,.50,.75], keys:[1,2,3]},
- halftime: {pickup:[0,3], hats:[0,.50,.75], keys:[3]},
+ halftime: {pickup:[0,3], hats:[0,.50,.75], keys:[3], kicks:[.75,2.5]},
  dream: {pickup:[2], hats:[.50], keys:[1,3]},
- house: {pickup:[0,2], hats:[.50,.75], keys:[0,2]},
- swing: {pickup:[1,3], hats:[0,.67], keys:[1,2,3]},
- rock: {pickup:[0,2], hats:[0,.50], keys:[0,1,2,3]},
- trap: {pickup:[0,2,3], hats:[0,.25,.50,.75], keys:[2]}
+ house: {pickup:[0,2], hats:[.50,.75], keys:[0,2], ghost:[3.5]},
+ swing: {pickup:[1,3], hats:[0,.67], keys:[1,2,3], ghost:[.67,2.67]},
+ rock: {pickup:[0,2], hats:[0,.50], keys:[0,1,2,3], kicks:[2.5], ghost:[3.75]},
+ trap: {pickup:[0,2,3], hats:[0,.25,.50,.75], keys:[2], kicks:[.75,1.5,3.75]},
+ punk: {pickup:[0,1,2,3], hats:[0,.25,.50,.75], keys:[0,1,2,3], kicks:[.5,1.75,2.5,3.5], ghost:[1.5,3.75]}
 };
 function schedulePetBeat(pet,step,time,seconds,play){
  const row=pet.notes?.[step%clipPatternSteps(pet)];
@@ -168,9 +170,15 @@ function scheduleBacking(audio,output,step,time,bpm){
   backingTone(audio,output,'sine',145,time,.11,.17,44);
  }
  if(profile.snare.includes(beat))backingPercussion(audio,output,time,.062,.105,950);
+ for(const hit of rhythm.kicks||[]){
+  if(Math.floor(hit)===beat)backingTone(audio,output,'sine',130,time+seconds*(hit-beat),.075,.13,46);
+ }
+ for(const hit of rhythm.ghost||[]){
+  if(Math.floor(hit)===beat)backingPercussion(audio,output,time+seconds*(hit-beat),.033,.075,1300);
+ }
  if(full||!['mellow','dream'].includes(backingStyle)){
   backingPercussion(audio,output,time+seconds*profile.hat,.027,.044,5400);
-  if(full)for(const offset of rhythm.hats){
+  if(full||backingStyle==='punk')for(const offset of rhythm.hats){
    if(Math.abs(offset-profile.hat)>.04)backingPercussion(audio,output,time+seconds*offset,.018,.031,6400);
   }
   if(fill||(profile.hatRoll&&beat===3))backingPercussion(audio,output,time+seconds*.76,.036,.051,4200);
@@ -179,7 +187,7 @@ function scheduleBacking(audio,output,step,time,bpm){
  if(!tones)return;
  const transpose=musicKey==='Am'?0:keyOffsets[musicKey]||0;
  const frequency=(root,note)=>root*2**((note+transpose)/12);
- if(beat===0||(full&&rhythm.keys.includes(beat))){
+ if(beat===0||((full||backingStyle==='punk')&&rhythm.keys.includes(beat))){
   const voicing=profile.powerChord?[tones[0],tones[2],tones[0]+12]:
    profile.seventh?[...tones,tones[0]+(chordPattern[bar]==='C'||chordPattern[bar]==='F'?11:10)]:tones;
   voicing.forEach((note,i)=>backingTone(audio,output,profile.wave,

@@ -9,7 +9,8 @@ const meowStyles = {
  house: {name: 'House', tempo: 144, key: 'C', chords: ['Am', 'G', 'F', 'C', 'Am', 'F', 'G', 'C'], beats: [0, 2, 4, 5, 7, 8, 10, 12, 13, 15], motif: [7, 4, 3], slice: .17},
  swing: {name: 'Swing Jazz', tempo: 128, key: 'G', chords: ['C', 'F', 'Am', 'G', 'C', 'Am', 'G', 'C'], beats: [0, 2, 3, 5, 6, 8, 10, 11, 13, 15], motif: [5, 3, 6], slice: .19},
  rock: {name: 'Garage Rock', tempo: 152, key: 'G', chords: ['C', 'C', 'F', 'G', 'C', 'F', 'G', 'C'], beats: [0, 1, 3, 4, 6, 8, 9, 11, 12, 14], motif: [7, 4, 3], slice: .17},
- trap: {name: 'Trap', tempo: 148, key: 'Am', chords: ['Am', 'F', 'Am', 'G', 'Am', 'G', 'F', 'Am'], beats: [0, 3, 5, 8, 9, 11, 14, 15], motif: [7, 6, 3], slice: .16}
+ trap: {name: 'Trap', tempo: 148, key: 'Am', chords: ['Am', 'F', 'Am', 'G', 'Am', 'G', 'F', 'Am'], beats: [0, 3, 5, 8, 9, 11, 14, 15], motif: [7, 6, 3], slice: .16},
+ punk: {name: 'Punk Rock', tempo: 160, key: 'C', chords: ['C', 'F', 'G', 'C', 'Am', 'F', 'G', 'C'], beats: [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 12, 13, 15], motif: [7, 4, 1], slice: .13}
 };
 
 function measureMeowPitch(samples, sampleRate, center) {
