@@ -6,7 +6,10 @@ const meowStyles = {
  arcade: {name: '8-bit Arcade', tempo: 146, key: 'F', chords: ['C', 'F', 'Am', 'G', 'C', 'Am', 'F', 'C'], beats: [0, 1, 3, 4, 5, 6, 8, 9, 11, 12, 13, 15], motif: [7, 3, 1], slice: .13},
  halftime: {name: 'Half-time Hip-Hop', tempo: 94, key: 'Am', chords: ['Am', 'C', 'G', 'F', 'Am', 'F', 'C', 'Am'], beats: [0, 1, 4, 7, 8, 10, 13, 15], motif: [7, 6, 4], slice: .19},
  dream: {name: 'Dream Pop', tempo: 92, key: 'F', chords: ['F', 'Am', 'C', 'G', 'F', 'C', 'G', 'C'], beats: [0, 3, 6, 8, 11, 13, 15], motif: [4, 2, 5], slice: .27},
- house: {name: 'House', tempo: 128, key: 'C', chords: ['Am', 'G', 'F', 'C', 'Am', 'F', 'G', 'C'], beats: [0, 2, 4, 5, 7, 8, 10, 12, 13, 15], motif: [7, 4, 3], slice: .17}
+ house: {name: 'House', tempo: 128, key: 'C', chords: ['Am', 'G', 'F', 'C', 'Am', 'F', 'G', 'C'], beats: [0, 2, 4, 5, 7, 8, 10, 12, 13, 15], motif: [7, 4, 3], slice: .17},
+ swing: {name: 'Swing Jazz', tempo: 108, key: 'G', chords: ['C', 'F', 'Am', 'G', 'C', 'Am', 'G', 'C'], beats: [0, 2, 3, 5, 6, 8, 10, 11, 13, 15], motif: [5, 3, 6], slice: .19},
+ rock: {name: 'Garage Rock', tempo: 138, key: 'G', chords: ['C', 'C', 'F', 'G', 'C', 'F', 'G', 'C'], beats: [0, 1, 3, 4, 6, 8, 9, 11, 12, 14], motif: [7, 4, 3], slice: .17},
+ trap: {name: 'Trap', tempo: 142, key: 'Am', chords: ['Am', 'F', 'Am', 'G', 'Am', 'G', 'F', 'Am'], beats: [0, 3, 5, 8, 9, 11, 14, 15], motif: [7, 6, 3], slice: .16}
 };
 
 function measureMeowPitch(samples, sampleRate, center) {
@@ -84,7 +87,8 @@ let lastMeowStyle = null;
 
 playMeowRemix.addEventListener('click', () => $('#play').click());
 
-$('#generateMeowRemix').addEventListener('click', () => {
+const generateMeowRemix = $('#generateMeowRemix');
+generateMeowRemix.addEventListener('click', () => {
  const pet = pets.find(item => item.id === selected);
  const buffer = pet && customBuffers.get(pet.id);
  if (!buffer) {
@@ -119,6 +123,7 @@ $('#generateMeowRemix').addEventListener('click', () => {
  scheduleDraftSave();
  meowRemixStatus.textContent = `Song ready! ${pet.name} sings an eight-bar ${style.name} remix.`;
  playMeowRemix.hidden = false;
+ generateMeowRemix.textContent = 'Generate another remix';
  notify('Meow song generated successfully');
 });
 

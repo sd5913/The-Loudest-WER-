@@ -90,7 +90,10 @@ const backingProfiles = {
  arcade: {kick:[0,2], snare:[1,3], hat:.5, wave:'square', bass:[0,2,3]},
  halftime: {kick:[0,3], snare:[2], hat:.58, wave:'triangle', bass:[0,3]},
  dream: {kick:[0], snare:[2], hat:.75, wave:'sine', bass:[0,2]},
- house: {kick:[0,1,2,3], snare:[1,3], hat:.5, wave:'triangle', bass:[1,3], chordOffset:.5}
+ house: {kick:[0,1,2,3], snare:[1,3], hat:.5, wave:'triangle', bass:[1,3], chordOffset:.5},
+ swing: {kick:[0,2], snare:[1,3], hat:.67, wave:'sine', bass:[0,1,2,3], chordOffset:.16, seventh:true},
+ rock: {kick:[0,2,3], snare:[1,3], hat:.5, wave:'sawtooth', bass:[0,1,2,3], powerChord:true},
+ trap: {kick:[0,3], snare:[2], hat:.5, wave:'triangle', bass:[0,3], hatRoll:true}
 };
 function backingTone(audio,output,type,pitch,time,level,duration,endPitch=pitch){
  const osc=audio.createOscillator(),gain=audio.createGain();
@@ -142,14 +145,16 @@ function scheduleBacking(audio,output,step,time,bpm){
  if(profile.snare.includes(beat))backingPercussion(audio,output,time,.062,.105,950);
  if(full||!['mellow','dream'].includes(backingStyle)){
   backingPercussion(audio,output,time+seconds*profile.hat,.027,.044,5400);
-  if(fill)backingPercussion(audio,output,time+seconds*.76,.036,.051,4200);
+  if(fill||(profile.hatRoll&&beat===3))backingPercussion(audio,output,time+seconds*.76,.036,.051,4200);
  }
  const tones=chordDegrees[chordPattern[bar]];
  if(!tones)return;
  const transpose=musicKey==='Am'?0:keyOffsets[musicKey]||0;
  const frequency=(root,note)=>root*2**((note+transpose)/12);
  if(beat===0){
-  tones.forEach((note,i)=>backingTone(audio,output,profile.wave,
+  const voicing=profile.powerChord?[tones[0],tones[2],tones[0]+12]:
+   profile.seventh?[...tones,tones[0]+(chordPattern[bar]==='C'||chordPattern[bar]==='F'?11:10)]:tones;
+  voicing.forEach((note,i)=>backingTone(audio,output,profile.wave,
    frequency(130.8128,note),time+seconds*(profile.chordOffset||0),.028-i*.005,Math.min(.8,seconds*1.65)));
  }
  if((profile.bass.includes(beat)&&(full||beat===profile.bass[0]))||fill){
