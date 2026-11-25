@@ -1,6 +1,6 @@
 // Each phrase has 16 visible cells; longer songs use a second editable phrase.
 let composerMode='rhythm', meter='4/4', musicKey='C', songLength=1, phrasePage=0;
-let chordEnabled=false, chordPattern=['C','Am','F','G'];
+let backingStyle='bright', chordEnabled=false, chordPattern=['C','Am','F','G'];
 let audioAnalyser=null, masterGain=null, waveFrame=0;
 const keyOffsets={C:0,G:7,F:5,Am:9};
 const majorScale=[0,-1,-3,-5,-7,-8,-10,-12,-13],minorScale=[0,-2,-4,-5,-7,-9,-10,-12,-14];
@@ -12,7 +12,8 @@ function phraseSteps(){return meter==='3/4'?12:16}
 function stepCount(){return phraseSteps()*songLength}
 function pageStart(){return phrasePage*phraseSteps()}
 function noteOffset(row,p){
- const petMidi=69+12*Math.log2((p.base||440)/440);
+ const base=(p.tone==='custom'&&p.source!=='instrument'?p.remixPitch:null)||p.base||440;
+ const petMidi=69+12*Math.log2(base/440);
  return 72+(keyOffsets[musicKey]||0)+(musicKey==='Am'?minorScale:majorScale)[row]-petMidi;
 }
 function melodyOffset(p,step){const row=p.notes?.[step];return Number.isInteger(row)?noteOffset(row,p):0}
@@ -61,6 +62,7 @@ function renderComposer(){
   button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active));
  });
  document.querySelector('#meter').value=meter;
+ document.querySelector('#meowBacking').checked=chordEnabled;
  document.querySelector('#musicKey').value=musicKey;
  document.querySelector('#songLength').value=String(songLength);
  document.querySelector('#lengthHint').textContent=`${stepCount()/ (meter==='3/4'?3:4)} bars · ${stepCount()} beats`;
@@ -79,29 +81,154 @@ function updateComposerPlayhead(){
  document.querySelectorAll('.note-cell').forEach(el=>el.classList.toggle('current',playing&&Number(el.dataset.noteStep)===beat));
  document.querySelectorAll('.chord-slot').forEach(el=>el.classList.toggle('current',playing&&Number(el.dataset.chordSlot)===Math.floor(beat/4)));
 }
-function playChord(step,time){
- if(!chordEnabled||step%4||!context)return;
- const chord=chordPattern[Math.floor(step/4)];
- if(!chord||chord==='—')return;
- const offset=musicKey==='Am'?0:keyOffsets[musicKey]||0,root=130.8128;
- const tones=chordDegrees[chord];
- tones.forEach((semitones,index)=>{
-  const osc=context.createOscillator(),gain=context.createGain();
-  osc.type='sine';osc.frequency.setValueAtTime(root*2**((semitones+offset)/12),time);
-  gain.gain.setValueAtTime(.0001,time);
-  gain.gain.linearRampToValueAtTime(index===0?.024:.013,time+.025);
-  gain.gain.exponentialRampToValueAtTime(.0001,time+Math.min(.75,240/(Number(document.querySelector('#tempo').value)||92)*.7));
-  osc.connect(gain);connectOutput(gain,{echo:0});
-  osc.start(time);osc.stop(time+1);
- });
+const backingNoise = new WeakMap();
+const backingProfiles = {
+ mellow: {kick:[0], snare:[1,3], hat:.62, wave:'sine', bass:[0,2]},
+ bright: {kick:[0], snare:[1,3], hat:.5, wave:'triangle', bass:[0,2]},
+ disco: {kick:[0,1,2,3], snare:[1,3], hat:.5, wave:'triangle', bass:[0,1,2,3]},
+ dub: {kick:[2], snare:[2], hat:.67, wave:'sine', bass:[0,3], chordOffset:.5},
+ arcade: {kick:[0,2], snare:[1,3], hat:.5, wave:'square', bass:[0,2,3]},
+ halftime: {kick:[0,3], snare:[2], hat:.58, wave:'triangle', bass:[0,3]},
+ dream: {kick:[0], snare:[2], hat:.75, wave:'sine', bass:[0,2]},
+ house: {kick:[0,1,2,3], snare:[1,3], hat:.5, wave:'triangle', bass:[1,3], chordOffset:.5},
+ swing: {kick:[0,2], snare:[1,3], hat:.67, wave:'sine', bass:[0,1,2,3], chordOffset:.16, seventh:true},
+ rock: {kick:[0,2,3], snare:[1,3], hat:.5, wave:'sawtooth', bass:[0,1,2,3], powerChord:true},
+ trap: {kick:[0,3], snare:[2], hat:.5, wave:'triangle', bass:[0,3], hatRoll:true},
+ punk: {kick:[0,2], snare:[1,3], hat:.5, wave:'sawtooth', bass:[0,1,2,3], powerChord:true}
+};
+const remixRhythms = {
+ mellow: {pickup:[3], hats:[.50,.76], keys:[2]},
+ bright: {pickup:[1,3], hats:[0,.50], keys:[1,3]},
+ disco: {pickup:[1,3], hats:[.25,.50,.75], keys:[0,1,2,3], ghost:[1.75,3.75]},
+ dub: {pickup:[0,2], hats:[.33,.67], keys:[1,2,3], ghost:[3.5]},
+ arcade: {pickup:[0,1,3], hats:[0,.25,.50,.75], keys:[1,2,3]},
+ halftime: {pickup:[0,3], hats:[0,.50,.75], keys:[3], kicks:[.75,2.5]},
+ dream: {pickup:[2], hats:[.50], keys:[1,3]},
+ house: {pickup:[0,2], hats:[.50,.75], keys:[0,2], ghost:[3.5]},
+ swing: {pickup:[1,3], hats:[0,.67], keys:[1,2,3], ghost:[.67,2.67]},
+ rock: {pickup:[0,2], hats:[0,.50], keys:[0,1,2,3], kicks:[2.5], ghost:[3.75]},
+ trap: {pickup:[0,2,3], hats:[0,.25,.50,.75], keys:[2], kicks:[.75,1.5,3.75]},
+ punk: {pickup:[0,1,2,3], hats:[0,.25,.50,.75], keys:[0,1,2,3], kicks:[.5,1.75,2.5,3.5], ghost:[1.5,3.75]}
+};
+function schedulePetBeat(pet,step,time,seconds,play){
+ const row=pet.notes?.[step%clipPatternSteps(pet)];
+ const offset=Number.isInteger(row)?noteOffset(row,pet):0;
+ if(!pet.remixPitch||pet.tone!=='custom'||pet.source==='instrument'||!Number.isInteger(row)){
+  play(time,offset);
+  return;
+ }
+ const beat=step%(meter==='3/4'?3:4);
+ const phraseBeat=step%phraseSteps();
+ const opening=phraseBeat===0||(phraseBeat===1&&!effectiveSteps(pet).includes(step-1));
+ const closing=row===7&&phraseBeat>=phraseSteps()-2;
+ // Octave transposition preserves pitch class while limiting changes to the recording's timbre.
+ const nearSource=shift=>shift-12*Math.round(shift/12);
+ if(opening||closing){
+  play(time,opening?0:nearSource(offset),Math.min(.55,seconds*.94));
+  return;
+ }
+ play(time,nearSource(offset));
+ if(!remixRhythms[backingStyle].pickup.includes(beat))return;
+ const answer=clamp(row+(step>=phraseSteps()?-2:1),1,8);
+ play(time+seconds*backingProfiles[backingStyle].hat,nearSource(noteOffset(answer,pet)));
 }
-function getComposerSaveState(){return {meter,musicKey,songLength,chordEnabled,chordPattern:[...chordPattern]}}
+function backingTone(audio,output,type,pitch,time,level,duration,endPitch=pitch){
+ const osc=audio.createOscillator(),gain=audio.createGain();
+ const attack=Math.min(.012,duration/4);
+ osc.type=type;
+ osc.frequency.setValueAtTime(pitch,time);
+ if(endPitch!==pitch)osc.frequency.exponentialRampToValueAtTime(endPitch,time+.055);
+ gain.gain.setValueAtTime(.0001,time);
+ gain.gain.linearRampToValueAtTime(level,time+attack);
+ gain.gain.exponentialRampToValueAtTime(.0001,time+duration);
+ osc.connect(gain).connect(output);
+ osc.start(time);
+ osc.stop(time+duration);
+}
+function backingPercussion(audio,output,time,level,duration,cutoff){
+ let buffer=backingNoise.get(audio);
+ if(!buffer){
+  buffer=audio.createBuffer(1,Math.ceil(audio.sampleRate*.16),audio.sampleRate);
+  const samples=buffer.getChannelData(0);
+  let seed=17;
+  for(let i=0;i<samples.length;i++){
+   seed=(Math.imul(seed,1664525)+1013904223)>>>0;
+   samples[i]=seed/2147483648-1;
+  }
+  backingNoise.set(audio,buffer);
+ }
+ const source=audio.createBufferSource(),filter=audio.createBiquadFilter(),gain=audio.createGain();
+ source.buffer=buffer;
+ filter.type='highpass';
+ filter.frequency.value=cutoff;
+ gain.gain.setValueAtTime(.0001,time);
+ gain.gain.linearRampToValueAtTime(level,time+.002);
+ gain.gain.exponentialRampToValueAtTime(.0001,time+duration);
+ source.connect(filter).connect(gain).connect(output);
+ source.start(time);
+ source.stop(time+duration);
+}
+function scheduleBacking(audio,output,step,time,bpm){
+ if(!chordEnabled)return;
+ const barLength=meter==='3/4'?3:4;
+ const bar=Math.floor(step/barLength),beat=step%barLength;
+ const full=step>=phraseSteps();
+ const profile=backingProfiles[backingStyle];
+ const rhythm=remixRhythms[backingStyle];
+ const seconds=60/bpm;
+ const fill=beat===barLength-1&&bar%4===3;
+ if(profile.kick.includes(beat)||(full&&backingStyle==='bright'&&beat===2)){
+  backingTone(audio,output,'sine',145,time,.11,.17,44);
+ }
+ if(profile.snare.includes(beat))backingPercussion(audio,output,time,.062,.105,950);
+ for(const hit of rhythm.kicks||[]){
+  if(Math.floor(hit)===beat)backingTone(audio,output,'sine',130,time+seconds*(hit-beat),.075,.13,46);
+ }
+ for(const hit of rhythm.ghost||[]){
+  if(Math.floor(hit)===beat)backingPercussion(audio,output,time+seconds*(hit-beat),.033,.075,1300);
+ }
+ if(full||!['mellow','dream'].includes(backingStyle)){
+  backingPercussion(audio,output,time+seconds*profile.hat,.027,.044,5400);
+  if(full||backingStyle==='punk')for(const offset of rhythm.hats){
+   if(Math.abs(offset-profile.hat)>.04)backingPercussion(audio,output,time+seconds*offset,.018,.031,6400);
+  }
+  if(fill||(profile.hatRoll&&beat===3))backingPercussion(audio,output,time+seconds*.76,.036,.051,4200);
+ }
+ const tones=chordDegrees[chordPattern[bar]];
+ if(!tones)return;
+ const transpose=musicKey==='Am'?0:keyOffsets[musicKey]||0;
+ const frequency=(root,note)=>root*2**((note+transpose)/12);
+ if(beat===0||((full||backingStyle==='punk')&&rhythm.keys.includes(beat))){
+  const voicing=profile.powerChord?[tones[0],tones[2],tones[0]+12]:
+   profile.seventh?[...tones,tones[0]+(chordPattern[bar]==='C'||chordPattern[bar]==='F'?11:10)]:tones;
+  voicing.forEach((note,i)=>backingTone(audio,output,profile.wave,
+   frequency(130.8128,note),time+seconds*(beat===0?(profile.chordOffset||0):.5),
+   (beat===0?.028:.023)-i*.005,Math.min(.8,seconds*(beat===0?1.65:.35))));
+ }
+ if((profile.bass.includes(beat)&&(full||beat===profile.bass[0]))||fill){
+  const note=tones[beat===2?2:0];
+  backingTone(audio,output,'triangle',frequency(65.4064,note),
+   time+(fill?seconds*.5:0),full?.09:.045,Math.min(.32,seconds*.6));
+ }
+ if((full&&beat!==0)||fill){
+  const note=tones[(beat+bar)%tones.length];
+  backingTone(audio,output,'sine',frequency(523.251,note),time+seconds*.54,.026,.16);
+ }
+}
+function playChord(step,time){
+ if(!context||!chordEnabled)return;
+ ensureAnalyser();
+ scheduleBacking(context,audioAnalyser,step,time,Number(document.querySelector('#tempo').value)||92);
+}
+function getComposerSaveState(){return {meter,musicKey,songLength,chordEnabled,backingStyle,chordPattern:[...chordPattern]}}
 function loadComposerState(song){
  meter=song.meter==='3/4'?'3/4':'4/4';
  musicKey=Object.hasOwn(keyOffsets,song.musicKey)?song.musicKey:'C';
  songLength=song.songLength===2?2:1;
- chordEnabled=false; // Legacy chord backing is disabled after removing its editor.
- if(Array.isArray(song.chordPattern))chordPattern=song.chordPattern.slice(0,stepCount()/4).map(v=>chordChoices.includes(v)?v:'—');
+ chordEnabled=song.chordEnabled===true;
+ backingStyle=Object.hasOwn(backingProfiles,song.backingStyle)?song.backingStyle:'bright';
+ chordPattern=[];
+ if(Array.isArray(song.chordPattern))chordPattern=song.chordPattern.slice(0,8).map(v=>chordChoices.includes(v)?v:'—');
  while(chordPattern.length<stepCount()/4)chordPattern.push(chordPattern[chordPattern.length%4]||'C');
 }
 document.querySelectorAll('[data-compose-mode]').forEach(button=>button.addEventListener('click',()=>{composerMode=button.dataset.composeMode;renderComposer()}));

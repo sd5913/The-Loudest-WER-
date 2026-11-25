@@ -12,6 +12,8 @@ python3 local_server.py
 
 Windows: `py local_server.py`. Open [Home](http://localhost:8766/index.html) or [Studio](http://localhost:8766/studio.html). Keep the terminal running; stop with Ctrl+C. No build step or package installation is needed.
 
+In **Manual Compose**, select a pet and upload a short call (up to 3 seconds after trimming silence) or record for up to 12 seconds (long takes are cropped to the strongest 3 seconds). Open **Turn a pet call into a song**, then click **Generate meow song** to pick one of twelve styles at random. Click **Generate another remix** to use the same recording with a different style, including Swing Jazz, Garage Rock, Punk Rock and Trap. This replaces the selected pet's melody and sets the session tempo, key, meter and eight-bar length. When **Song ready!** appears, click **Play / pause remix** or **Play together** to hear a short slice of the original call pitched into a randomized one-octave melody shaped by its pitch contour, with chord tones on bar downbeats and a tonic ending, with style-specific offbeat cat notes and drum subdivisions at 112?160 BPM. The second half adds vocal accents, denser drums, bass and syncopated chords. Each phrase opens with a longer natural call, and sung notes stay in the octave closest to the recorded pitch. You can edit the generated notes, toggle **Chords and beat**, save to **My Collection**, or export a WAV. The remix runs locally in the browser.
+
 ## Changes / 修改内容
 
 - English-only UI, fewer duplicate entry points, larger room/stage and clearer controls.
