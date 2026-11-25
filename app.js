@@ -55,9 +55,10 @@ function trimOnset(buffer){
  return {buffer:trimmed,peak};
 }
 function useCustomVoice(p,buffer,name){
- p.aiPerformance='voice';
  if(!buffer.duration||buffer.duration>12)throw new Error('Please use a recording under 12 seconds');
  const prepared=trimOnset(buffer);
+ p.aiPerformance='voice';
+ delete p.remixPitch;
  customBuffers.set(p.id,prepared.buffer);
  customLevels.set(p.id,Math.min(2.5,.55/prepared.peak));
  p.customAudioData=audioBufferData(prepared.buffer);
@@ -147,8 +148,8 @@ function captureSession(){
   aiSongPrompt:$('#aiSongPrompt').value,aiSongDuration:$('#aiSongDuration').value,
   aiSongInstrumental:$('#aiSongInstrumental').checked,aiSamplePrompt:$('#aiSoundPrompt').value,
   ...getComposerSaveState(),
-  pets:pets.map(({id,name,volume,pitch,tone,strength,echo,repeat,muted,steps,notes,source,instrument,customAudioData,audioData,customVoiceName,customLevel,kind,asset,image,sampleId,sampleFile,base,wave,custom,aiPerformance,clipStart,clipEnd,clipRepeats})=>
-   ({id,name,volume,pitch,tone,strength,echo,repeat,muted,steps:[...steps],notes:notes?{...notes}:{},source:source||'voice',instrument:instrument||'piano',customAudioData:customAudioData||audioData||'',customVoiceName:customVoiceName||'My uploaded voice',customLevel,kind,asset,image,sampleId,sampleFile,base,wave,custom,aiPerformance,clipStart:clipStart||0,clipEnd:clipEnd??1,clipRepeats:clipRepeats||1}))};
+  pets:pets.map(({id,name,volume,pitch,tone,strength,echo,repeat,muted,steps,notes,source,instrument,customAudioData,audioData,customVoiceName,customLevel,remixPitch,kind,asset,image,sampleId,sampleFile,base,wave,custom,aiPerformance,clipStart,clipEnd,clipRepeats})=>
+   ({id,name,volume,pitch,tone,strength,echo,repeat,muted,steps:[...steps],notes:notes?{...notes}:{},source:source||'voice',instrument:instrument||'piano',customAudioData:customAudioData||audioData||'',customVoiceName:customVoiceName||'My uploaded voice',customLevel,remixPitch,kind,asset,image,sampleId,sampleFile,base,wave,custom,aiPerformance,clipStart:clipStart||0,clipEnd:clipEnd??1,clipRepeats:clipRepeats||1}))};
 }
 function restoreSession(saved){
  if(!Array.isArray(saved?.pets))return false;
@@ -180,7 +181,7 @@ function playSynthClip(p,t,rate){
  source.connect(gain);connectOutput(gain,p);
  source.start(t,range.start,range.duration);source.stop(t+duration+.01);animate(p.id);return true;
 }
-function sound(p,time=0,noteOffset=0){if(p.aiPerformance==='music'){animate(p.id);return}if(!context||context.state==='closed')return;const t=Math.max(context.currentTime+.005,time),rate=2**((p.pitch+noteOffset)/12);if(p.source==='instrument'&&playInstrument(p,t,noteOffset))return;if(p.tone==='custom'&&customBuffers.has(p.id)){const source=context.createBufferSource(),high=context.createBiquadFilter(),shape=context.createWaveShaper(),low=context.createBiquadFilter(),gain=context.createGain();source.buffer=customBuffers.get(p.id);source.playbackRate.setValueAtTime(rate,t);high.type='highpass';high.frequency.setValueAtTime(170,t);shape.curve=digitalCurve;shape.oversample='2x';low.type='lowpass';low.frequency.setValueAtTime(2800,t);const range=clipRange(p,source.buffer),duration=range.duration/rate,level=Math.max(.001,p.volume/100*.24*(customLevels.get(p.id)||1)*((p.strength??70)/100*.7+.3)),attack=Math.min(.018,duration*.22),fade=Math.min(.045,duration*.4);gain.gain.setValueAtTime(.0001,t);gain.gain.linearRampToValueAtTime(level,t+attack);gain.gain.setValueAtTime(level,t+Math.max(attack,duration-fade));gain.gain.linearRampToValueAtTime(0,t+duration);source.connect(high).connect(shape).connect(low).connect(gain);connectOutput(gain,p);source.start(t,range.start,range.duration);source.stop(t+duration+.01);animate(p.id);return}if(p.tone==='meow'&&singingBuffer){
+function sound(p,time=0,noteOffset=0){if(p.aiPerformance==='music'){animate(p.id);return}if(!context||context.state==='closed')return;const t=Math.max(context.currentTime+.005,time),rate=2**((p.pitch+noteOffset)/12);if(p.source==='instrument'&&playInstrument(p,t,noteOffset))return;if(p.tone==='custom'&&customBuffers.has(p.id)){const source=context.createBufferSource(),high=context.createBiquadFilter(),shape=context.createWaveShaper(),low=context.createBiquadFilter(),gain=context.createGain();source.buffer=customBuffers.get(p.id);source.playbackRate.setValueAtTime(rate,t);high.type='highpass';high.frequency.setValueAtTime(170,t);shape.curve=digitalCurve;shape.oversample='2x';low.type='lowpass';low.frequency.setValueAtTime(2800,t);const range=clipRange(p,source.buffer),duration=range.duration/rate,level=Math.max(.001,p.volume/100*.24*(customLevels.get(p.id)||1)*((p.strength??70)/100*.7+.3)),attack=Math.min(.018,duration*.22),fade=Math.min(.045,duration*.4);gain.gain.setValueAtTime(.0001,t);gain.gain.linearRampToValueAtTime(level,t+attack);gain.gain.setValueAtTime(level,t+Math.max(attack,duration-fade));gain.gain.linearRampToValueAtTime(0,t+duration);if(p.remixPitch)source.connect(gain);else source.connect(high).connect(shape).connect(low).connect(gain);connectOutput(gain,p);source.start(t,range.start,range.duration);source.stop(t+duration+.01);animate(p.id);return}if(p.tone==='meow'&&singingBuffer){
  const source=context.createBufferSource(),filter=context.createBiquadFilter(),gain=context.createGain();
  source.buffer=singingBuffer;
  const target=(p.base||440)*rate*2,singingRate=Math.max(.5,Math.min(4,target/520));

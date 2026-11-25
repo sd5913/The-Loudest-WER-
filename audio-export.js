@@ -26,7 +26,7 @@ function exportVoice(p,when,offset,mix,offline){
   if(p.tone==='meow')rate=Math.max(.5,Math.min(4,(p.base||440)*rate*2/520));
   range=clipRange(p,buffer);
   level=Math.max(.001,p.volume/100*(p.tone==='custom'?.24*(customLevels.get(p.id)||1):p.tone==='meow'?.4:p.tone==='sample'?(p.id==='cat'?.24:.36):.22)*strength);
-  if(['sample','meow','custom'].includes(p.tone)){
+  if(['sample','meow','custom'].includes(p.tone)&&!(p.tone==='custom'&&p.remixPitch)){
    filter=offline.createBiquadFilter();filter.type='lowpass';
    filter.frequency.value=p.tone==='sample'&&p.id==='cat'?2500:p.tone==='custom'?2800:3200;
   }

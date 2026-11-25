@@ -12,7 +12,8 @@ function phraseSteps(){return meter==='3/4'?12:16}
 function stepCount(){return phraseSteps()*songLength}
 function pageStart(){return phrasePage*phraseSteps()}
 function noteOffset(row,p){
- const petMidi=69+12*Math.log2((p.base||440)/440);
+ const base=(p.tone==='custom'&&p.source!=='instrument'?p.remixPitch:null)||p.base||440;
+ const petMidi=69+12*Math.log2(base/440);
  return 72+(keyOffsets[musicKey]||0)+(musicKey==='Am'?minorScale:majorScale)[row]-petMidi;
 }
 function melodyOffset(p,step){const row=p.notes?.[step];return Number.isInteger(row)?noteOffset(row,p):0}
@@ -61,6 +62,7 @@ function renderComposer(){
   button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active));
  });
  document.querySelector('#meter').value=meter;
+ document.querySelector('#meowBacking').checked=chordEnabled;
  document.querySelector('#musicKey').value=musicKey;
  document.querySelector('#songLength').value=String(songLength);
  document.querySelector('#lengthHint').textContent=`${stepCount()/ (meter==='3/4'?3:4)} bars · ${stepCount()} beats`;
@@ -100,8 +102,9 @@ function loadComposerState(song){
  meter=song.meter==='3/4'?'3/4':'4/4';
  musicKey=Object.hasOwn(keyOffsets,song.musicKey)?song.musicKey:'C';
  songLength=song.songLength===2?2:1;
- chordEnabled=false; // Legacy chord backing is disabled after removing its editor.
- if(Array.isArray(song.chordPattern))chordPattern=song.chordPattern.slice(0,stepCount()/4).map(v=>chordChoices.includes(v)?v:'—');
+ chordEnabled=song.chordEnabled===true;
+ chordPattern=[];
+ if(Array.isArray(song.chordPattern))chordPattern=song.chordPattern.slice(0,8).map(v=>chordChoices.includes(v)?v:'—');
  while(chordPattern.length<stepCount()/4)chordPattern.push(chordPattern[chordPattern.length%4]||'C');
 }
 document.querySelectorAll('[data-compose-mode]').forEach(button=>button.addEventListener('click',()=>{composerMode=button.dataset.composeMode;renderComposer()}));
