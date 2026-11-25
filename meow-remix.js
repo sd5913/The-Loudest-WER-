@@ -1,6 +1,12 @@
 const meowStyles = {
- mellow: {tempo: 84, key: 'Am', chords: ['Am', 'F', 'C', 'G', 'Am', 'C', 'F', 'Am'], beats: [0, 2, 3, 5, 7, 8, 10, 12, 14], motif: [7, 5, 4], slice: .22},
- bright: {tempo: 116, key: 'C', chords: ['C', 'G', 'Am', 'F', 'C', 'Am', 'G', 'C'], beats: [0, 1, 2, 4, 6, 7, 8, 10, 11, 12, 14], motif: [7, 5, 3], slice: .16}
+ mellow: {name: 'Mellow Lo-fi', tempo: 84, key: 'Am', chords: ['Am', 'F', 'C', 'G', 'Am', 'C', 'F', 'Am'], beats: [0, 2, 3, 5, 7, 8, 10, 12, 14], motif: [7, 5, 4], slice: .22},
+ bright: {name: 'Bright Pop', tempo: 116, key: 'C', chords: ['C', 'G', 'Am', 'F', 'C', 'Am', 'G', 'C'], beats: [0, 1, 2, 4, 6, 7, 8, 10, 11, 12, 14], motif: [7, 5, 3], slice: .16},
+ disco: {name: 'Disco', tempo: 124, key: 'G', chords: ['Am', 'F', 'C', 'G', 'Am', 'F', 'G', 'C'], beats: [0, 2, 3, 5, 6, 8, 9, 11, 12, 14, 15], motif: [5, 3, 2], slice: .15},
+ dub: {name: 'Dub', tempo: 78, key: 'Am', chords: ['Am', 'G', 'F', 'G', 'Am', 'F', 'G', 'Am'], beats: [1, 3, 4, 7, 9, 11, 12, 15], motif: [7, 4, 5], slice: .24},
+ arcade: {name: '8-bit Arcade', tempo: 146, key: 'F', chords: ['C', 'F', 'Am', 'G', 'C', 'Am', 'F', 'C'], beats: [0, 1, 3, 4, 5, 6, 8, 9, 11, 12, 13, 15], motif: [7, 3, 1], slice: .13},
+ halftime: {name: 'Half-time Hip-Hop', tempo: 94, key: 'Am', chords: ['Am', 'C', 'G', 'F', 'Am', 'F', 'C', 'Am'], beats: [0, 1, 4, 7, 8, 10, 13, 15], motif: [7, 6, 4], slice: .19},
+ dream: {name: 'Dream Pop', tempo: 92, key: 'F', chords: ['F', 'Am', 'C', 'G', 'F', 'C', 'G', 'C'], beats: [0, 3, 6, 8, 11, 13, 15], motif: [4, 2, 5], slice: .27},
+ house: {name: 'House', tempo: 128, key: 'C', chords: ['Am', 'G', 'F', 'C', 'Am', 'F', 'G', 'C'], beats: [0, 2, 4, 5, 7, 8, 10, 12, 13, 15], motif: [7, 4, 3], slice: .17}
 };
 
 function measureMeowPitch(samples, sampleRate, center) {
@@ -74,6 +80,7 @@ function makeMeowArrangement(buffer, style, sections) {
 
 const meowRemixStatus = $('#meowRemixStatus');
 const playMeowRemix = $('#playMeowRemix');
+let lastMeowStyle = null;
 
 playMeowRemix.addEventListener('click', () => $('#play').click());
 
@@ -85,7 +92,9 @@ $('#generateMeowRemix').addEventListener('click', () => {
   meowRemixStatus.textContent = 'Upload or record a short call for this pet first.';
   return;
  }
- const styleName = $('#meowStyle').value;
+ const previous = lastMeowStyle || (chordEnabled ? backingStyle : null);
+ const choices = Object.keys(meowStyles).filter(name => name !== previous);
+ const styleName = choices[Math.floor(Math.random() * choices.length)];
  const style = meowStyles[styleName];
  const {notes, root, clipStart, clipEnd} = makeMeowArrangement(buffer, style, 2);
  if (playing) $('#stop').click();
@@ -95,6 +104,7 @@ $('#generateMeowRemix').addEventListener('click', () => {
  $('#tempo').value = style.tempo;
  chordPattern = [...style.chords];
  backingStyle = styleName;
+ lastMeowStyle = styleName;
  chordEnabled = true;
  $('#meowBacking').checked = true;
  Object.assign(pet, {
@@ -107,7 +117,7 @@ $('#generateMeowRemix').addEventListener('click', () => {
  composerMode = 'melody';
  render();
  scheduleDraftSave();
- meowRemixStatus.textContent = `Song ready! ${pet.name} sings an eight-bar remix.`;
+ meowRemixStatus.textContent = `Song ready! ${pet.name} sings an eight-bar ${style.name} remix.`;
  playMeowRemix.hidden = false;
  notify('Meow song generated successfully');
 });

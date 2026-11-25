@@ -82,6 +82,16 @@ function updateComposerPlayhead(){
  document.querySelectorAll('.chord-slot').forEach(el=>el.classList.toggle('current',playing&&Number(el.dataset.chordSlot)===Math.floor(beat/4)));
 }
 const backingNoise = new WeakMap();
+const backingProfiles = {
+ mellow: {kick:[0], snare:[1,3], hat:.62, wave:'sine', bass:[0,2]},
+ bright: {kick:[0], snare:[1,3], hat:.5, wave:'triangle', bass:[0,2]},
+ disco: {kick:[0,1,2,3], snare:[1,3], hat:.5, wave:'triangle', bass:[0,1,2,3]},
+ dub: {kick:[2], snare:[2], hat:.67, wave:'sine', bass:[0,3], chordOffset:.5},
+ arcade: {kick:[0,2], snare:[1,3], hat:.5, wave:'square', bass:[0,2,3]},
+ halftime: {kick:[0,3], snare:[2], hat:.58, wave:'triangle', bass:[0,3]},
+ dream: {kick:[0], snare:[2], hat:.75, wave:'sine', bass:[0,2]},
+ house: {kick:[0,1,2,3], snare:[1,3], hat:.5, wave:'triangle', bass:[1,3], chordOffset:.5}
+};
 function backingTone(audio,output,type,pitch,time,level,duration,endPitch=pitch){
  const osc=audio.createOscillator(),gain=audio.createGain();
  const attack=Math.min(.012,duration/4);
@@ -122,15 +132,16 @@ function scheduleBacking(audio,output,step,time,bpm){
  if(!chordEnabled)return;
  const barLength=meter==='3/4'?3:4;
  const bar=Math.floor(step/barLength),beat=step%barLength;
- const full=step>=phraseSteps(),mellow=backingStyle==='mellow';
+ const full=step>=phraseSteps();
+ const profile=backingProfiles[backingStyle];
  const seconds=60/bpm;
  const fill=beat===barLength-1&&bar%4===3;
- if(beat===0||(full&&!mellow&&beat===2)){
+ if(profile.kick.includes(beat)||(full&&backingStyle==='bright'&&beat===2)){
   backingTone(audio,output,'sine',145,time,.11,.17,44);
  }
- if(beat===1||beat===3)backingPercussion(audio,output,time,.062,.105,950);
- if(full||!mellow){
-  backingPercussion(audio,output,time+seconds*(mellow?.62:.5),.027,.044,5400);
+ if(profile.snare.includes(beat))backingPercussion(audio,output,time,.062,.105,950);
+ if(full||!['mellow','dream'].includes(backingStyle)){
+  backingPercussion(audio,output,time+seconds*profile.hat,.027,.044,5400);
   if(fill)backingPercussion(audio,output,time+seconds*.76,.036,.051,4200);
  }
  const tones=chordDegrees[chordPattern[bar]];
@@ -138,10 +149,10 @@ function scheduleBacking(audio,output,step,time,bpm){
  const transpose=musicKey==='Am'?0:keyOffsets[musicKey]||0;
  const frequency=(root,note)=>root*2**((note+transpose)/12);
  if(beat===0){
-  tones.forEach((note,i)=>backingTone(audio,output,mellow?'sine':'triangle',
-   frequency(130.8128,note),time,.028-i*.005,Math.min(.8,seconds*1.65)));
+  tones.forEach((note,i)=>backingTone(audio,output,profile.wave,
+   frequency(130.8128,note),time+seconds*(profile.chordOffset||0),.028-i*.005,Math.min(.8,seconds*1.65)));
  }
- if(beat===0||(full&&beat===2)||fill){
+ if((profile.bass.includes(beat)&&(full||beat===profile.bass[0]))||fill){
   const note=tones[beat===2?2:0];
   backingTone(audio,output,'triangle',frequency(65.4064,note),
    time+(fill?seconds*.5:0),full?.09:.045,Math.min(.32,seconds*.6));
@@ -162,7 +173,7 @@ function loadComposerState(song){
  musicKey=Object.hasOwn(keyOffsets,song.musicKey)?song.musicKey:'C';
  songLength=song.songLength===2?2:1;
  chordEnabled=song.chordEnabled===true;
- backingStyle=song.backingStyle==='mellow'?'mellow':'bright';
+ backingStyle=Object.hasOwn(backingProfiles,song.backingStyle)?song.backingStyle:'bright';
  chordPattern=[];
  if(Array.isArray(song.chordPattern))chordPattern=song.chordPattern.slice(0,8).map(v=>chordChoices.includes(v)?v:'—');
  while(chordPattern.length<stepCount()/4)chordPattern.push(chordPattern[chordPattern.length%4]||'C');
