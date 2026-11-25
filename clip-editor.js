@@ -61,6 +61,13 @@ function clipRange(p,buffer){
  if(end-start<minimum){start=rawStart;end=rawEnd}
  return {start,end,duration:end-start};
 }
+function remixVoiceRange(p,buffer,voiceLength,rate){
+ const range=clipRange(p,buffer);
+ if(!voiceLength)return range;
+ const duration=Math.min(buffer.duration,Math.max(range.duration,voiceLength*rate));
+ const start=Math.max(0,Math.min(range.start-(duration-range.duration)*.4,buffer.duration-duration));
+ return {start,end:start+duration,duration};
+}
 function drawClipWave(canvas,buffer,start,end){
  if(!canvas||!buffer)return;
  const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height,data=buffer.getChannelData(0),bars=120;

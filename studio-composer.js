@@ -113,13 +113,24 @@ const remixRhythms = {
 function schedulePetBeat(pet,step,time,seconds,play){
  const row=pet.notes?.[step%clipPatternSteps(pet)];
  const offset=Number.isInteger(row)?noteOffset(row,pet):0;
- play(time,offset);
- if(!pet.remixPitch||pet.tone!=='custom'||pet.source==='instrument'||!Number.isInteger(row))return;
+ if(!pet.remixPitch||pet.tone!=='custom'||pet.source==='instrument'||!Number.isInteger(row)){
+  play(time,offset);
+  return;
+ }
  const beat=step%(meter==='3/4'?3:4);
- if(row===7&&step%phraseSteps()>=phraseSteps()-2)return;
+ const phraseBeat=step%phraseSteps();
+ const opening=phraseBeat===0||(phraseBeat===1&&!effectiveSteps(pet).includes(step-1));
+ const closing=row===7&&phraseBeat>=phraseSteps()-2;
+ // Octave transposition preserves pitch class while limiting changes to the recording's timbre.
+ const nearSource=shift=>shift-12*Math.round(shift/12);
+ if(opening||closing){
+  play(time,opening?0:nearSource(offset),Math.min(.55,seconds*.94));
+  return;
+ }
+ play(time,nearSource(offset));
  if(!remixRhythms[backingStyle].pickup.includes(beat))return;
  const answer=clamp(row+(step>=phraseSteps()?-2:1),1,8);
- play(time+seconds*backingProfiles[backingStyle].hat,noteOffset(answer,pet));
+ play(time+seconds*backingProfiles[backingStyle].hat,nearSource(noteOffset(answer,pet)));
 }
 function backingTone(audio,output,type,pitch,time,level,duration,endPitch=pitch){
  const osc=audio.createOscillator(),gain=audio.createGain();

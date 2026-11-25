@@ -7,7 +7,7 @@ function exportConnect(node,pet,mix,offline){
   node.connect(delay);delay.connect(wet).connect(mix);delay.connect(feedback).connect(delay);
  }
 }
-function exportVoice(p,when,offset,mix,offline){
+function exportVoice(p,when,offset,mix,offline,voiceLength=0){
  if(p.aiPerformance==='music')return;
  const strength=(p.strength??70)/100*.7+.3;
  let buffer,rate=2**(((p.pitch||0)+offset)/12),level,range,filter=null;
@@ -24,7 +24,7 @@ function exportVoice(p,when,offset,mix,offline){
   buffer=clipBufferFor(p);
   if(!buffer)return;
   if(p.tone==='meow')rate=Math.max(.5,Math.min(4,(p.base||440)*rate*2/520));
-  range=clipRange(p,buffer);
+  range=remixVoiceRange(p,buffer,voiceLength,rate);
   level=Math.max(.001,p.volume/100*(p.tone==='custom'?.24*(customLevels.get(p.id)||1):p.tone==='meow'?.4:p.tone==='sample'?(p.id==='cat'?.24:.36):.22)*strength);
   if(['sample','meow','custom'].includes(p.tone)&&!(p.tone==='custom'&&p.remixPitch)){
    filter=offline.createBiquadFilter();filter.type='lowpass';
@@ -79,7 +79,7 @@ async function renderExportAudio({loops=1}={}){
   const at=.04+absoluteStep*60/bpm;
   for(const p of pets){
    if(p.muted||!petPlaysInLoop(p,cycle)||!effectiveSteps(p).includes(step))continue;
-   schedulePetBeat(p,step,at,60/bpm,(time,offset)=>exportVoice(p,time,offset,mix,offline));
+   schedulePetBeat(p,step,at,60/bpm,(time,offset,length)=>exportVoice(p,time,offset,mix,offline,length));
   }
   scheduleBacking(offline,mix,step,at,bpm);
  }
