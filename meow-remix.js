@@ -1,6 +1,6 @@
 const meowStyles = {
- mellow: {tempo: 84, key: 'Am', chords: ['Am', 'F', 'C', 'Am'], beats: [0, 3, 6, 8, 11, 14]},
- bright: {tempo: 122, key: 'C', chords: ['C', 'G', 'F', 'C'], beats: [0, 2, 4, 7, 8, 10, 12, 14]}
+ mellow: {tempo: 84, key: 'Am', chords: ['Am', 'F', 'C', 'Am'], beats: [0, 2, 3, 5, 7, 8, 10, 12, 14], hook: [7, 5, 4, 3, 5, 7, 4, 5, 7], slice: .22},
+ bright: {tempo: 122, key: 'C', chords: ['C', 'G', 'F', 'C'], beats: [0, 1, 2, 4, 5, 7, 8, 9, 10, 12, 13, 15], hook: [7, 5, 3, 1, 3, 5, 4, 2, 4, 3, 5, 7], slice: .16}
 };
 
 function measureMeowPitch(samples, sampleRate, center) {
@@ -39,21 +39,25 @@ function measureMeowPitch(samples, sampleRate, center) {
 
 function makeMeowArrangement(buffer, style, sections) {
  const samples = buffer.getChannelData(0);
- const pitches = [.2, .35, .5, .65, .8].map(center => measureMeowPitch(samples, buffer.sampleRate, center));
- const voiced = pitches.filter(pitch => pitch !== null).sort((a, b) => a - b);
- const root = voiced[Math.floor(voiced.length / 2)] ?? null;
- const fallback = [7, 5, 4, 5, 6];
- const motif = pitches.map((pitch, i) => {
-  if (pitch === null || voiced.length < 2) return fallback[i];
-  return clamp(7 - Math.round(6 * Math.log2(pitch / root)), 2, 8);
- });
+ const length = Math.min(samples.length, Math.round(buffer.sampleRate * style.slice));
+ const hop = Math.max(1, Math.round(buffer.sampleRate * .035));
+ let loudest = {start: 0, energy: -1}, voiced = null;
+ for (let start = 0; start <= samples.length - length; start += hop) {
+  let energy = 0;
+  for (let i = start; i < start + length; i += 4) energy += samples[i] ** 2;
+  const pitch = measureMeowPitch(samples, buffer.sampleRate, (start + length / 2) / samples.length);
+  if (energy > loudest.energy) loudest = {start, energy};
+  if (pitch && (!voiced || energy > voiced.energy)) voiced = {start, energy, pitch};
+ }
+ const slice = voiced || loudest;
  const notes = {};
  for (let section = 0; section < sections; section++) {
   style.beats.forEach((beat, i) => {
-   notes[section * 16 + beat] = i === style.beats.length - 1 ? 7 : motif[(i + section) % motif.length];
+   notes[section * 16 + beat] = style.hook[i];
   });
  }
- return {notes, root};
+ return {notes, root: voiced?.pitch, clipStart: slice.start / samples.length,
+  clipEnd: (slice.start + length) / samples.length};
 }
 
 $('#generateMeowRemix').addEventListener('click', () => {
@@ -64,7 +68,7 @@ $('#generateMeowRemix').addEventListener('click', () => {
   return;
  }
  const style = meowStyles[$('#meowStyle').value];
- const {notes, root} = makeMeowArrangement(buffer, style, songLength);
+ const {notes, root, clipStart, clipEnd} = makeMeowArrangement(buffer, style, songLength);
  if (playing) $('#stop').click();
  meter = '4/4';
  musicKey = style.key;
@@ -75,7 +79,7 @@ $('#generateMeowRemix').addEventListener('click', () => {
  Object.assign(pet, {
   notes, steps: Object.keys(notes).map(Number), remixPitch: root || pet.base || 440,
   tone: 'custom', source: 'voice', aiPerformance: 'voice',
-  pitch: 0, clipRepeats: 1, repeat: 'loop', muted: false
+  pitch: 0, clipStart, clipEnd, clipRepeats: 1, repeat: 'loop', muted: false
  });
  phrasePage = 0;
  focusBeat = 0;

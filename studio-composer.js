@@ -81,7 +81,25 @@ function updateComposerPlayhead(){
  document.querySelectorAll('.note-cell').forEach(el=>el.classList.toggle('current',playing&&Number(el.dataset.noteStep)===beat));
  document.querySelectorAll('.chord-slot').forEach(el=>el.classList.toggle('current',playing&&Number(el.dataset.chordSlot)===Math.floor(beat/4)));
 }
+function playBackingBeat(audio,output,step,time){
+ if(!chordEnabled)return;
+ const bar=meter==='3/4'?3:4;
+ const accent=step%bar===0;
+ const drum=audio.createOscillator(),gain=audio.createGain();
+ drum.type=accent?'sine':'triangle';
+ drum.frequency.setValueAtTime(accent?148:740,time);
+ drum.frequency.exponentialRampToValueAtTime(accent?45:320,time+.052);
+ gain.gain.setValueAtTime(accent?.09:.022,time);
+ gain.gain.exponentialRampToValueAtTime(.0001,time+(accent?.16:.065));
+ drum.connect(gain).connect(output);
+ drum.start(time);
+ drum.stop(time+.17);
+}
 function playChord(step,time){
+ if(chordEnabled&&context){
+  ensureAnalyser();
+  playBackingBeat(context,audioAnalyser,step,time);
+ }
  if(!chordEnabled||step%4||!context)return;
  const chord=chordPattern[Math.floor(step/4)];
  if(!chord||chord==='—')return;

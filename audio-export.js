@@ -43,6 +43,7 @@ function exportVoice(p,when,offset,mix,offline){
  source.start(when,range.start,range.duration);source.stop(when+duration+.01);
 }
 function exportChord(step,when,mix,offline,bpm){
+ playBackingBeat(offline,mix,step,when);
  if(!chordEnabled||step%4)return;
  const chord=chordPattern[Math.floor(step/4)],tones=chordDegrees[chord];
  if(!tones)return;

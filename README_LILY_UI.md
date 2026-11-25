@@ -12,7 +12,7 @@ python3 local_server.py
 
 Windows: `py local_server.py`. Open [Home](http://localhost:8766/index.html) or [Studio](http://localhost:8766/studio.html). Keep the terminal running; stop with Ctrl+C. No build step or package installation is needed.
 
-In **Manual Compose**, select a pet and upload a short call (up to 3 seconds after trimming silence) or record for up to 12 seconds (long takes are cropped to the strongest 3 seconds). Open **Turn a pet call into a song**, choose **Mellow** or **Bright Pop**, then click **Generate meow song**. This replaces the selected pet's melody and sets the session tempo, key and meter. **Play together** previews the original call pitched as the lead over synthesized chords. You can edit the generated notes, toggle **Chord backing**, save to **My Collection**, or export a WAV. The remix runs locally in the browser.
+In **Manual Compose**, select a pet and upload a short call (up to 3 seconds after trimming silence) or record for up to 12 seconds (long takes are cropped to the strongest 3 seconds). Open **Turn a pet call into a song**, choose **Mellow** or **Bright Pop**, then click **Generate meow song**. This replaces the selected pet's melody and sets the session tempo, key and meter. **Play together** previews the a short slice of the original call pitched into a melody over synthesized chords and a beat. You can edit the generated notes, toggle **Chords and beat**, save to **My Collection**, or export a WAV. The remix runs locally in the browser.
 
 ## Changes / 修改内容
 
