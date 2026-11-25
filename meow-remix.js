@@ -47,6 +47,19 @@ function measureMeowPitch(samples, sampleRate, center) {
  return null;
 }
 
+function pickMeowRow(style, step, target, previous, cadence = false) {
+ const scale = style.key === 'Am' ? minorScale : majorScale;
+ const chord = chordDegrees[style.chords[Math.floor(step / 4)]];
+ const tonic = style.key === 'Am' ? 9 : 0;
+ const chordRows = scale.slice(0, 8).flatMap((offset, row) =>
+  chord.some(note => (note - tonic - offset) % 12 === 0) ? [row] : []);
+ const pool = (cadence || step % 4 === 0) && chordRows.length ? chordRows : [0, 1, 2, 3, 4, 5, 6, 7];
+ const nearby = pool.filter(row => row !== previous && Math.abs(row - target) <= 2);
+ const alternatives = pool.filter(row => row !== previous);
+ const choices = nearby.length ? nearby : alternatives.length ? alternatives : pool;
+ return choices[Math.floor(Math.random() * choices.length)];
+}
+
 function makeMeowArrangement(buffer, style, sections) {
  const samples = buffer.getChannelData(0);
  const length = Math.min(samples.length, Math.round(buffer.sampleRate * style.slice));
@@ -70,13 +83,17 @@ function makeMeowArrangement(buffer, style, sections) {
   return clamp(row - rise, 1, 8);
  });
  const notes = {};
+ let previous = null;
  for (let section = 0; section < sections; section++) {
   const beats = section > 0 ? [...new Set([...style.beats, 7, 11, 14])].sort((a,b)=>a-b) : style.beats;
   beats.forEach((beat, i) => {
    const last = i === beats.length - 1;
    const row = motif[i % motif.length];
    const answer = beat >= 12 ? (section > 0 ? -3 : 2) : beat >= 8 ? -1 : 0;
-   notes[section * 16 + beat] = last ? 7 : clamp(row + answer, 1, 8);
+   const step = section * 16 + beat;
+   previous = last && section === sections - 1 ? 7
+    : pickMeowRow(style, step, last ? 0 : clamp(row + answer, 0, 7), previous, last);
+   notes[step] = previous;
   });
  }
  return {notes, root: voiced?.pitch, clipStart: slice.start / samples.length,
