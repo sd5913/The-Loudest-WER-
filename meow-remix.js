@@ -1,6 +1,6 @@
 const meowStyles = {
- mellow: {tempo: 84, key: 'Am', chords: ['Am', 'F', 'C', 'Am'], beats: [0, 2, 3, 5, 7, 8, 10, 12, 14], motif: [7, 5, 4], slice: .22},
- bright: {tempo: 122, key: 'C', chords: ['C', 'G', 'F', 'C'], beats: [0, 1, 2, 4, 5, 7, 8, 9, 10, 12, 13, 15], motif: [7, 5, 3], slice: .16}
+ mellow: {tempo: 84, key: 'Am', chords: ['Am', 'F', 'C', 'G', 'Am', 'C', 'F', 'Am'], beats: [0, 2, 3, 5, 7, 8, 10, 12, 14], motif: [7, 5, 4], slice: .22},
+ bright: {tempo: 116, key: 'C', chords: ['C', 'G', 'Am', 'F', 'C', 'Am', 'G', 'C'], beats: [0, 1, 2, 4, 6, 7, 8, 10, 11, 12, 14], motif: [7, 5, 3], slice: .16}
 };
 
 function measureMeowPitch(samples, sampleRate, center) {
@@ -64,9 +64,8 @@ function makeMeowArrangement(buffer, style, sections) {
   style.beats.forEach((beat, i) => {
    const last = i === style.beats.length - 1;
    const row = motif[i % motif.length];
-   // Keep the hook recognizable and lift the final repeat over the bass entrance.
-   const lift = section > 0 && i >= style.beats.length - 4 ? 2 : 0;
-   notes[section * 16 + beat] = last ? 7 : Math.max(1, row - lift);
+   const answer = beat >= 8 ? (section > 0 ? -2 : 1) : 0;
+   notes[section * 16 + beat] = last ? 7 : clamp(row + answer, 1, 8);
   });
  }
  return {notes, root: voiced?.pitch, clipStart: slice.start / samples.length,
@@ -86,14 +85,16 @@ $('#generateMeowRemix').addEventListener('click', () => {
   meowRemixStatus.textContent = 'Upload or record a short call for this pet first.';
   return;
  }
- const style = meowStyles[$('#meowStyle').value];
+ const styleName = $('#meowStyle').value;
+ const style = meowStyles[styleName];
  const {notes, root, clipStart, clipEnd} = makeMeowArrangement(buffer, style, 2);
  if (playing) $('#stop').click();
  meter = '4/4';
  songLength = 2;
  musicKey = style.key;
  $('#tempo').value = style.tempo;
- chordPattern = [...style.chords, ...style.chords];
+ chordPattern = [...style.chords];
+ backingStyle = styleName;
  chordEnabled = true;
  $('#meowBacking').checked = true;
  Object.assign(pet, {

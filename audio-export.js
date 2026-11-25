@@ -42,20 +42,6 @@ function exportVoice(p,when,offset,mix,offline){
  exportConnect(gain,p,mix,offline);
  source.start(when,range.start,range.duration);source.stop(when+duration+.01);
 }
-function exportChord(step,when,mix,offline,bpm){
- playBackingBeat(offline,mix,step,when);
- if(!chordEnabled||step%4)return;
- const chord=chordPattern[Math.floor(step/4)],tones=chordDegrees[chord];
- if(!tones)return;
- const offset=musicKey==='Am'?0:keyOffsets[musicKey]||0;
- tones.forEach((semitones,index)=>{
-  const osc=offline.createOscillator(),gain=offline.createGain(),duration=Math.min(.75,240/bpm*.7);
-  osc.type='sine';osc.frequency.setValueAtTime(130.8128*2**((semitones+offset)/12),when);
-  gain.gain.setValueAtTime(0,when);gain.gain.linearRampToValueAtTime(index===0?.024:.013,when+.025);
-  gain.gain.exponentialRampToValueAtTime(.0001,when+duration);
-  osc.connect(gain).connect(mix);osc.start(when);osc.stop(when+duration+.02);
- });
-}
 async function exportAiSong(mix,offline,sectionSeconds){
  if(!aiSongData)return;
  const bytes=await (await fetch(aiSongData)).arrayBuffer();
@@ -95,7 +81,7 @@ async function renderExportAudio({loops=1}={}){
    if(p.muted||!petPlaysInLoop(p,cycle)||!effectiveSteps(p).includes(step))continue;
    exportVoice(p,at,melodyOffset(p,step%clipPatternSteps(p)),mix,offline);
   }
-  exportChord(step,at,mix,offline,bpm);
+  scheduleBacking(offline,mix,step,at,bpm);
  }
  await exportAiSong(mix,offline,seconds);
  return offline.startRendering();
