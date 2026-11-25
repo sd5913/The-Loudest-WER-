@@ -37,7 +37,7 @@ function setStudioHint(message){const hint=document.querySelector('#studioHint')
 
 function stagePosition(p,i,positions){const fallback=starterStagePositions[p.id]||extraStagePositions[(i-3+extraStagePositions.length)%extraStagePositions.length];const stored=positions[p.id];return stored&&Number.isFinite(Number(stored.x))&&Number.isFinite(Number(stored.y))?{x:clamp(Number(stored.x),0,100),y:clamp(Number(stored.y),0,100)}:fallback;}
 const sampleBuffers=new Map(),customBuffers=new Map(),customLevels=new Map();
-function trimOnset(buffer){
+function trimOnset(buffer, cropRecording=false){
  const channels=Array.from({length:buffer.numberOfChannels},(_,i)=>buffer.getChannelData(i));
  let peak=0;
  for(const data of channels)for(let i=0;i<data.length;i++)peak=Math.max(peak,Math.abs(data[i]));
@@ -46,17 +46,35 @@ function trimOnset(buffer){
  let first=buffer.length,last=0;
  for(let i=0;i<buffer.length;i++)if(channels.some(data=>Math.abs(data[i])>=threshold)){first=Math.min(first,i);last=i}
  if(first===buffer.length)throw new Error('No clear sound found');
- const start=Math.max(0,first-Math.round(buffer.sampleRate*.015));
- const end=Math.min(buffer.length,last+Math.round(buffer.sampleRate*.08));
+ let start=Math.max(0,first-Math.round(buffer.sampleRate*.015));
+ let end=Math.min(buffer.length,last+1+Math.round(buffer.sampleRate*.08));
+ const maxLength=3*buffer.sampleRate;
+ if(end-start>maxLength){
+  if(!cropRecording)throw new Error('Choose a pet sound with no more than 3 seconds of audible sound');
+  const energy=index=>channels.reduce((sum,data)=>sum+data[index]**2,0);
+  const firstStart=start;
+  let current=0;
+  for(let i=firstStart;i<firstStart+maxLength;i++)current+=energy(i);
+  let best=current;
+  for(let i=firstStart+maxLength;i<end;i++){
+   current+=energy(i)-energy(i-maxLength);
+   if(current>best){
+    best=current;
+    start=i-maxLength+1;
+   }
+  }
+  end=start+maxLength;
+  peak=0;
+  for(const data of channels)for(let i=start;i<end;i++)peak=Math.max(peak,Math.abs(data[i]));
+ }
  const length=end-start;
- if(length/buffer.sampleRate>3)throw new Error('Choose a call under 3 seconds after silence is removed');
  const trimmed=context.createBuffer(buffer.numberOfChannels,length,buffer.sampleRate);
  channels.forEach((data,i)=>trimmed.copyToChannel(data.subarray(start,end),i));
  return {buffer:trimmed,peak};
 }
-function useCustomVoice(p,buffer,name){
+function useCustomVoice(p,buffer,name,cropRecording=false){
  if(!buffer.duration||buffer.duration>12)throw new Error('Please use a recording under 12 seconds');
- const prepared=trimOnset(buffer);
+ const prepared=trimOnset(buffer,cropRecording);
  p.aiPerformance='voice';
  delete p.remixPitch;
  customBuffers.set(p.id,prepared.buffer);
@@ -390,7 +408,7 @@ $('#soundTab').addEventListener('click',()=>{document.querySelector('.sound-pane
     });
     const pet=pets.find(p=>p.id===petId);
     if(!pet)return;
-    useCustomVoice(pet,buffer,'Recorded call');
+    useCustomVoice(pet,buffer,'Recorded call',true);
     if(context.state==='running')sound(pet);
     notify('Recording is now this pet’s beat-aligned track');
    }catch(error){failure=error.message;notify(failure)}
@@ -404,7 +422,7 @@ $('#soundTab').addEventListener('click',()=>{document.querySelector('.sound-pane
   recorder.start();
   recording=session;
   session.timer=setTimeout(()=>{if(recorder.state==='recording')recorder.stop()},12000);
-  render();notify('Record one clear call, up to 3 seconds of sound');
+  render();notify('Recording for up to 12 seconds. The strongest 3 seconds are kept if needed.');
  }catch(error){
   stream?.getTracks().forEach(track=>track.stop());
   notify(error.name==='NotAllowedError'?'Allow microphone access to record':
