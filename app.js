@@ -357,15 +357,59 @@ $('#solfegeKeys').addEventListener('click',async event=>{
 });
 $('#volume').addEventListener('input',e=>{const p=pets.find(a=>a.id===selected);p.volume=Number(e.target.value);$('#volumeValue').textContent=`${p.volume}%`});$('#toneStrength').addEventListener('input',e=>{const p=pets.find(a=>a.id===selected);p.strength=Number(e.target.value);$('#toneStrengthValue').textContent=`${p.strength}%`});$('#echo').addEventListener('input',e=>{const p=pets.find(a=>a.id===selected);p.echo=Number(e.target.value);$('#echoValue').textContent=`${p.echo}%`});$('#pitch').addEventListener('input',e=>{const p=pets.find(a=>a.id===selected);p.pitch=Number(e.target.value);$('#pitchValue').textContent=`${p.pitch>0?'+':''}${p.pitch} st`});$('#repeat').addEventListener('change',e=>{pets.find(a=>a.id===selected).repeat=e.target.value});$('#voice').addEventListener('change',async e=>{const pet=pets.find(a=>a.id===selected);pet.tone=e.target.value;pet.source='voice';pet.clipStart=0;pet.clipEnd=pet.tone==='sample'&&pet.asset==='samoyed'?.36:1;render();if(pet.tone==='sample'||pet.tone==='meow'){context ||= new(window.AudioContext||window.webkitAudioContext)();await context.resume();await loadSamples()}sound(pet)});
 $('#soundTab').addEventListener('click',()=>{document.querySelector('.sound-panel').hidden=false;document.querySelector('.effect-panel').hidden=true;$('#soundTab').classList.add('active');$('#effectTab').classList.remove('active')});$('#effectTab').addEventListener('click',()=>{document.querySelector('.sound-panel').hidden=true;document.querySelector('.effect-panel').hidden=false;$('#effectTab').classList.add('active');$('#soundTab').classList.remove('active')});$('#sourceRecord').addEventListener('click',async()=>{
- if(recording){recording.recorder.stop();return}
+ if(recording){
+  if(recording.recorder.state==='recording')recording.recorder.stop();
+  return;
+ }
  if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){notify('Recording is unavailable in this browser');return}
+ const button=$('#sourceRecord'),petId=selected;
+ let stream;
+ button.disabled=true;
  try{
-  const petId=selected,stream=await navigator.mediaDevices.getUserMedia({audio:true}),recorder=new MediaRecorder(stream),chunks=[];
-  recording={petId,stream,recorder,chunks,timer:null};
+  context ||= new(window.AudioContext||window.webkitAudioContext)();
+  context.resume().catch(()=>{});
+  stream=await navigator.mediaDevices.getUserMedia({audio:true});
+  const mimeType=['audio/webm;codecs=opus','audio/mp4','audio/ogg;codecs=opus']
+   .find(type=>MediaRecorder.isTypeSupported?.(type));
+  const recorder=mimeType?new MediaRecorder(stream,{mimeType}):new MediaRecorder(stream);
+  const chunks=[],session={petId,stream,recorder,chunks,timer:null};
   recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
-  recorder.onstop=async()=>{const session=recording;recording=null;clearTimeout(session.timer);stream.getTracks().forEach(track=>track.stop());const pet=pets.find(p=>p.id===petId);if(!pet)return;try{context ||= new(window.AudioContext||window.webkitAudioContext)();await context.resume();const blob=new Blob(chunks,{type:recorder.mimeType||'audio/webm'});const buffer=await context.decodeAudioData(await blob.arrayBuffer());useCustomVoice(pet,buffer,'Recorded call');render();sound(pet);notify('Recording is now this pet’s beat-aligned track')}catch{render();notify('Recording could not be decoded')}};
-  recorder.start();recording.timer=setTimeout(()=>{if(recorder.state==='recording')recorder.stop()},12000);render();notify('Recording for up to 12 seconds');
- }catch{notify('Microphone access was not granted')}
+  recorder.onerror=()=>{session.failed=true};
+  recorder.onstop=async()=>{
+   button.disabled=true;
+   clearTimeout(session.timer);
+   stream.getTracks().forEach(track=>track.stop());
+   let failure;
+   try{
+    if(session.failed)throw new Error('Recording was interrupted. Try again or upload a WAV.');
+    if(!chunks.length)throw new Error('No audio was captured. Check the microphone and record again.');
+    const blob=new Blob(chunks,{type:chunks[0].type||recorder.mimeType});
+    const bytes=await blob.arrayBuffer();
+    const buffer=await context.decodeAudioData(bytes).catch(()=>{
+     throw new Error('This browser could not decode the recording. Try another browser or upload a WAV.');
+    });
+    const pet=pets.find(p=>p.id===petId);
+    if(!pet)return;
+    useCustomVoice(pet,buffer,'Recorded call');
+    if(context.state==='running')sound(pet);
+    notify('Recording is now this pet’s beat-aligned track');
+   }catch(error){failure=error.message;notify(failure)}
+   finally{
+    recording=null;
+    button.disabled=false;
+    render();
+    if(failure&&selected===petId)$('#voiceStatus').textContent=failure;
+   }
+  };
+  recorder.start();
+  recording=session;
+  session.timer=setTimeout(()=>{if(recorder.state==='recording')recorder.stop()},12000);
+  render();notify('Record one clear call, up to 3 seconds of sound');
+ }catch(error){
+  stream?.getTracks().forEach(track=>track.stop());
+  notify(error.name==='NotAllowedError'?'Allow microphone access to record':
+   error.name==='NotFoundError'?'No microphone found. Check your input device.':'Could not start the microphone. Check your device or upload a WAV.');
+ }finally{button.disabled=false}
 });
 $('#sourceUpload').addEventListener('click',()=>$('#voiceUpload').click());$('#sourceSynth').addEventListener('click',async()=>{const p=pets.find(a=>a.id===selected);p.source='voice';render();context ||= new(window.AudioContext||window.webkitAudioContext)();await context.resume();await loadSamples();sound(p)});
 $('#importVoice').addEventListener('click',()=>$('#voiceUpload').click());
