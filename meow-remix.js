@@ -1,15 +1,15 @@
 const meowStyles = {
- mellow: {name: 'Mellow Lo-fi', tempo: 84, key: 'Am', chords: ['Am', 'F', 'C', 'G', 'Am', 'C', 'F', 'Am'], beats: [0, 2, 3, 5, 7, 8, 10, 12, 14], motif: [7, 5, 4], slice: .22},
- bright: {name: 'Bright Pop', tempo: 116, key: 'C', chords: ['C', 'G', 'Am', 'F', 'C', 'Am', 'G', 'C'], beats: [0, 1, 2, 4, 6, 7, 8, 10, 11, 12, 14], motif: [7, 5, 3], slice: .16},
- disco: {name: 'Disco', tempo: 124, key: 'G', chords: ['Am', 'F', 'C', 'G', 'Am', 'F', 'G', 'C'], beats: [0, 2, 3, 5, 6, 8, 9, 11, 12, 14, 15], motif: [5, 3, 2], slice: .15},
- dub: {name: 'Dub', tempo: 78, key: 'Am', chords: ['Am', 'G', 'F', 'G', 'Am', 'F', 'G', 'Am'], beats: [1, 3, 4, 7, 9, 11, 12, 15], motif: [7, 4, 5], slice: .24},
- arcade: {name: '8-bit Arcade', tempo: 146, key: 'F', chords: ['C', 'F', 'Am', 'G', 'C', 'Am', 'F', 'C'], beats: [0, 1, 3, 4, 5, 6, 8, 9, 11, 12, 13, 15], motif: [7, 3, 1], slice: .13},
- halftime: {name: 'Half-time Hip-Hop', tempo: 94, key: 'Am', chords: ['Am', 'C', 'G', 'F', 'Am', 'F', 'C', 'Am'], beats: [0, 1, 4, 7, 8, 10, 13, 15], motif: [7, 6, 4], slice: .19},
- dream: {name: 'Dream Pop', tempo: 92, key: 'F', chords: ['F', 'Am', 'C', 'G', 'F', 'C', 'G', 'C'], beats: [0, 3, 6, 8, 11, 13, 15], motif: [4, 2, 5], slice: .27},
- house: {name: 'House', tempo: 128, key: 'C', chords: ['Am', 'G', 'F', 'C', 'Am', 'F', 'G', 'C'], beats: [0, 2, 4, 5, 7, 8, 10, 12, 13, 15], motif: [7, 4, 3], slice: .17},
- swing: {name: 'Swing Jazz', tempo: 108, key: 'G', chords: ['C', 'F', 'Am', 'G', 'C', 'Am', 'G', 'C'], beats: [0, 2, 3, 5, 6, 8, 10, 11, 13, 15], motif: [5, 3, 6], slice: .19},
- rock: {name: 'Garage Rock', tempo: 138, key: 'G', chords: ['C', 'C', 'F', 'G', 'C', 'F', 'G', 'C'], beats: [0, 1, 3, 4, 6, 8, 9, 11, 12, 14], motif: [7, 4, 3], slice: .17},
- trap: {name: 'Trap', tempo: 142, key: 'Am', chords: ['Am', 'F', 'Am', 'G', 'Am', 'G', 'F', 'Am'], beats: [0, 3, 5, 8, 9, 11, 14, 15], motif: [7, 6, 3], slice: .16}
+ mellow: {name: 'Mellow Lo-fi', tempo: 112, key: 'Am', chords: ['Am', 'F', 'C', 'G', 'Am', 'C', 'F', 'Am'], beats: [0, 2, 3, 5, 7, 8, 10, 12, 14], motif: [7, 5, 4], slice: .22},
+ bright: {name: 'Bright Pop', tempo: 132, key: 'C', chords: ['C', 'G', 'Am', 'F', 'C', 'Am', 'G', 'C'], beats: [0, 1, 2, 4, 6, 7, 8, 10, 11, 12, 14], motif: [7, 5, 3], slice: .16},
+ disco: {name: 'Disco', tempo: 138, key: 'G', chords: ['Am', 'F', 'C', 'G', 'Am', 'F', 'G', 'C'], beats: [0, 2, 3, 5, 6, 8, 9, 11, 12, 14, 15], motif: [5, 3, 2], slice: .15},
+ dub: {name: 'Dub', tempo: 118, key: 'Am', chords: ['Am', 'G', 'F', 'G', 'Am', 'F', 'G', 'Am'], beats: [1, 3, 4, 7, 9, 11, 12, 15], motif: [7, 4, 5], slice: .24},
+ arcade: {name: '8-bit Arcade', tempo: 154, key: 'F', chords: ['C', 'F', 'Am', 'G', 'C', 'Am', 'F', 'C'], beats: [0, 1, 3, 4, 5, 6, 8, 9, 11, 12, 13, 15], motif: [7, 3, 1], slice: .13},
+ halftime: {name: 'Half-time Hip-Hop', tempo: 124, key: 'Am', chords: ['Am', 'C', 'G', 'F', 'Am', 'F', 'C', 'Am'], beats: [0, 1, 4, 7, 8, 10, 13, 15], motif: [7, 6, 4], slice: .19},
+ dream: {name: 'Dream Pop', tempo: 116, key: 'F', chords: ['F', 'Am', 'C', 'G', 'F', 'C', 'G', 'C'], beats: [0, 3, 6, 8, 11, 13, 15], motif: [4, 2, 5], slice: .27},
+ house: {name: 'House', tempo: 144, key: 'C', chords: ['Am', 'G', 'F', 'C', 'Am', 'F', 'G', 'C'], beats: [0, 2, 4, 5, 7, 8, 10, 12, 13, 15], motif: [7, 4, 3], slice: .17},
+ swing: {name: 'Swing Jazz', tempo: 128, key: 'G', chords: ['C', 'F', 'Am', 'G', 'C', 'Am', 'G', 'C'], beats: [0, 2, 3, 5, 6, 8, 10, 11, 13, 15], motif: [5, 3, 6], slice: .19},
+ rock: {name: 'Garage Rock', tempo: 152, key: 'G', chords: ['C', 'C', 'F', 'G', 'C', 'F', 'G', 'C'], beats: [0, 1, 3, 4, 6, 8, 9, 11, 12, 14], motif: [7, 4, 3], slice: .17},
+ trap: {name: 'Trap', tempo: 148, key: 'Am', chords: ['Am', 'F', 'Am', 'G', 'Am', 'G', 'F', 'Am'], beats: [0, 3, 5, 8, 9, 11, 14, 15], motif: [7, 6, 3], slice: .16}
 };
 
 function measureMeowPitch(samples, sampleRate, center) {
@@ -70,10 +70,11 @@ function makeMeowArrangement(buffer, style, sections) {
  });
  const notes = {};
  for (let section = 0; section < sections; section++) {
-  style.beats.forEach((beat, i) => {
-   const last = i === style.beats.length - 1;
+  const beats = section > 0 ? [...new Set([...style.beats, 7, 11, 14])].sort((a,b)=>a-b) : style.beats;
+  beats.forEach((beat, i) => {
+   const last = i === beats.length - 1;
    const row = motif[i % motif.length];
-   const answer = beat >= 8 ? (section > 0 ? -2 : 1) : 0;
+   const answer = beat >= 12 ? (section > 0 ? -3 : 2) : beat >= 8 ? -1 : 0;
    notes[section * 16 + beat] = last ? 7 : clamp(row + answer, 1, 8);
   });
  }

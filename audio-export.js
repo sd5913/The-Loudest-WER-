@@ -79,7 +79,7 @@ async function renderExportAudio({loops=1}={}){
   const at=.04+absoluteStep*60/bpm;
   for(const p of pets){
    if(p.muted||!petPlaysInLoop(p,cycle)||!effectiveSteps(p).includes(step))continue;
-   exportVoice(p,at,melodyOffset(p,step%clipPatternSteps(p)),mix,offline);
+   schedulePetBeat(p,step,at,60/bpm,(time,offset)=>exportVoice(p,time,offset,mix,offline));
   }
   scheduleBacking(offline,mix,step,at,bpm);
  }

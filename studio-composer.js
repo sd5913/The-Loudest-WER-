@@ -95,6 +95,30 @@ const backingProfiles = {
  rock: {kick:[0,2,3], snare:[1,3], hat:.5, wave:'sawtooth', bass:[0,1,2,3], powerChord:true},
  trap: {kick:[0,3], snare:[2], hat:.5, wave:'triangle', bass:[0,3], hatRoll:true}
 };
+const remixRhythms = {
+ mellow: {pickup:[3], hats:[.50,.76], keys:[2]},
+ bright: {pickup:[1,3], hats:[0,.50], keys:[1,3]},
+ disco: {pickup:[1,3], hats:[.25,.50,.75], keys:[0,1,2,3]},
+ dub: {pickup:[0,2], hats:[.33,.67], keys:[1,2,3]},
+ arcade: {pickup:[0,1,3], hats:[0,.25,.50,.75], keys:[1,2,3]},
+ halftime: {pickup:[0,3], hats:[0,.50,.75], keys:[3]},
+ dream: {pickup:[2], hats:[.50], keys:[1,3]},
+ house: {pickup:[0,2], hats:[.50,.75], keys:[0,2]},
+ swing: {pickup:[1,3], hats:[0,.67], keys:[1,2,3]},
+ rock: {pickup:[0,2], hats:[0,.50], keys:[0,1,2,3]},
+ trap: {pickup:[0,2,3], hats:[0,.25,.50,.75], keys:[2]}
+};
+function schedulePetBeat(pet,step,time,seconds,play){
+ const row=pet.notes?.[step%clipPatternSteps(pet)];
+ const offset=Number.isInteger(row)?noteOffset(row,pet):0;
+ play(time,offset);
+ if(!pet.remixPitch||pet.tone!=='custom'||pet.source==='instrument'||!Number.isInteger(row))return;
+ const beat=step%(meter==='3/4'?3:4);
+ if(row===7&&step%phraseSteps()>=phraseSteps()-2)return;
+ if(!remixRhythms[backingStyle].pickup.includes(beat))return;
+ const answer=clamp(row+(step>=phraseSteps()?-2:1),1,8);
+ play(time+seconds*backingProfiles[backingStyle].hat,noteOffset(answer,pet));
+}
 function backingTone(audio,output,type,pitch,time,level,duration,endPitch=pitch){
  const osc=audio.createOscillator(),gain=audio.createGain();
  const attack=Math.min(.012,duration/4);
@@ -137,6 +161,7 @@ function scheduleBacking(audio,output,step,time,bpm){
  const bar=Math.floor(step/barLength),beat=step%barLength;
  const full=step>=phraseSteps();
  const profile=backingProfiles[backingStyle];
+ const rhythm=remixRhythms[backingStyle];
  const seconds=60/bpm;
  const fill=beat===barLength-1&&bar%4===3;
  if(profile.kick.includes(beat)||(full&&backingStyle==='bright'&&beat===2)){
@@ -145,17 +170,21 @@ function scheduleBacking(audio,output,step,time,bpm){
  if(profile.snare.includes(beat))backingPercussion(audio,output,time,.062,.105,950);
  if(full||!['mellow','dream'].includes(backingStyle)){
   backingPercussion(audio,output,time+seconds*profile.hat,.027,.044,5400);
+  if(full)for(const offset of rhythm.hats){
+   if(Math.abs(offset-profile.hat)>.04)backingPercussion(audio,output,time+seconds*offset,.018,.031,6400);
+  }
   if(fill||(profile.hatRoll&&beat===3))backingPercussion(audio,output,time+seconds*.76,.036,.051,4200);
  }
  const tones=chordDegrees[chordPattern[bar]];
  if(!tones)return;
  const transpose=musicKey==='Am'?0:keyOffsets[musicKey]||0;
  const frequency=(root,note)=>root*2**((note+transpose)/12);
- if(beat===0){
+ if(beat===0||(full&&rhythm.keys.includes(beat))){
   const voicing=profile.powerChord?[tones[0],tones[2],tones[0]+12]:
    profile.seventh?[...tones,tones[0]+(chordPattern[bar]==='C'||chordPattern[bar]==='F'?11:10)]:tones;
   voicing.forEach((note,i)=>backingTone(audio,output,profile.wave,
-   frequency(130.8128,note),time+seconds*(profile.chordOffset||0),.028-i*.005,Math.min(.8,seconds*1.65)));
+   frequency(130.8128,note),time+seconds*(beat===0?(profile.chordOffset||0):.5),
+   (beat===0?.028:.023)-i*.005,Math.min(.8,seconds*(beat===0?1.65:.35))));
  }
  if((profile.bass.includes(beat)&&(full||beat===profile.bass[0]))||fill){
   const note=tones[beat===2?2:0];
