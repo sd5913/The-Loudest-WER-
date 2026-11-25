@@ -1,6 +1,6 @@
 const meowStyles = {
- mellow: {tempo: 84, key: 'Am', chords: ['Am', 'F', 'C', 'Am'], beats: [0, 2, 3, 5, 7, 8, 10, 12, 14], hook: [7, 5, 4, 3, 5, 7, 4, 5, 7], slice: .22},
- bright: {tempo: 122, key: 'C', chords: ['C', 'G', 'F', 'C'], beats: [0, 1, 2, 4, 5, 7, 8, 9, 10, 12, 13, 15], hook: [7, 5, 3, 1, 3, 5, 4, 2, 4, 3, 5, 7], slice: .16}
+ mellow: {tempo: 84, key: 'Am', chords: ['Am', 'F', 'C', 'Am'], beats: [0, 2, 3, 5, 7, 8, 10, 12, 14], motif: [7, 5, 4], slice: .22},
+ bright: {tempo: 122, key: 'C', chords: ['C', 'G', 'F', 'C'], beats: [0, 1, 2, 4, 5, 7, 8, 9, 10, 12, 13, 15], motif: [7, 5, 3], slice: .16}
 };
 
 function measureMeowPitch(samples, sampleRate, center) {
@@ -50,10 +50,20 @@ function makeMeowArrangement(buffer, style, sections) {
   if (pitch && (!voiced || energy > voiced.energy)) voiced = {start, energy, pitch};
  }
  const slice = voiced || loudest;
+ // Use the contour around the selected voice, including the attack and decay.
+ const contour = [.1, .5, .9].map(point =>
+  measureMeowPitch(samples, buffer.sampleRate, (slice.start + point * length) / samples.length));
+ const reference = voiced?.pitch;
+ const motif = style.motif.map((row, i) => {
+  if (!reference || !contour[i]) return row;
+  const rise = clamp(Math.round(6 * Math.log2(contour[i] / reference)), -2, 2);
+  return clamp(row - rise, 1, 8);
+ });
  const notes = {};
  for (let section = 0; section < sections; section++) {
   style.beats.forEach((beat, i) => {
-   notes[section * 16 + beat] = style.hook[i];
+   const last = i === style.beats.length - 1;
+   notes[section * 16 + beat] = last ? 7 : motif[i % motif.length];
   });
  }
  return {notes, root: voiced?.pitch, clipStart: slice.start / samples.length,
@@ -68,9 +78,10 @@ $('#generateMeowRemix').addEventListener('click', () => {
   return;
  }
  const style = meowStyles[$('#meowStyle').value];
- const {notes, root, clipStart, clipEnd} = makeMeowArrangement(buffer, style, songLength);
+ const {notes, root, clipStart, clipEnd} = makeMeowArrangement(buffer, style, 2);
  if (playing) $('#stop').click();
  meter = '4/4';
+ songLength = 2;
  musicKey = style.key;
  $('#tempo').value = style.tempo;
  chordPattern = [...style.chords, ...style.chords];

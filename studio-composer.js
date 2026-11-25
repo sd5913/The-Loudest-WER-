@@ -94,6 +94,19 @@ function playBackingBeat(audio,output,step,time){
  drum.connect(gain).connect(output);
  drum.start(time);
  drum.stop(time+.17);
+ if(step<phraseSteps()||step%bar%2!==0)return;
+ const tones=chordDegrees[chordPattern[Math.floor(step/bar)]];
+ if(!tones)return;
+ const bass=audio.createOscillator(),bassGain=audio.createGain();
+ const transpose=musicKey==='Am'?0:keyOffsets[musicKey]||0;
+ bass.type='triangle';
+ bass.frequency.setValueAtTime(65.4064*2**((tones[0]+transpose)/12),time);
+ bassGain.gain.setValueAtTime(.0001,time);
+ bassGain.gain.linearRampToValueAtTime(.072,time+.016);
+ bassGain.gain.exponentialRampToValueAtTime(.0001,time+.30);
+ bass.connect(bassGain).connect(output);
+ bass.start(time);
+ bass.stop(time+.31);
 }
 function playChord(step,time){
  if(chordEnabled&&context){
