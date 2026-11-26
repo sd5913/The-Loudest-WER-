@@ -1,0 +1,66 @@
+/* AI screen: examples on the left, inputs on the right, stage below. */
+#aiCreation{width:100%;max-width:1500px;border:0;box-shadow:none;background:transparent;overflow:visible;margin:26px auto 42px!important}
+#aiCreation>.titlebar{display:none}
+#aiCreation .ai-layout-body{padding:0}
+.ai-layout-header{display:flex;align-items:center;justify-content:space-between;gap:24px;margin:0 0 28px}
+.ai-layout-header .eyebrow{font:10px/1.4 'Courier New',monospace;letter-spacing:1.8px;color:#c9a9cd;margin:0 0 9px}
+.ai-mode-switch,.ai-band-toggle{display:flex;padding:4px;background:#362440;border:1px solid #775482;border-radius:30px}
+.ai-mode-switch{width:min(470px,46%)}
+.ai-mode-switch>*{flex:1;text-align:center;padding:13px 18px;font:600 14px Arial,sans-serif;color:#dac2df;text-decoration:none;border:0;background:transparent;border-radius:24px;box-shadow:none}
+.ai-mode-switch .active,.ai-band-toggle [aria-pressed=true]{background:#f2a3d6;color:#2b1834}
+.ai-create-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:34px;padding:30px;border:1px solid #775482;border-radius:24px;background:linear-gradient(120deg,#30203d,#281b35)}
+.ai-listen-column{padding-top:42px;min-width:0}.ai-input-column{min-width:0}
+.ai-listen-column>p{color:#c4aecf;font-size:14px;line-height:1.6;margin:0 0 22px}
+.ai-demo-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.ai-demo-card{position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;min-width:0;aspect-ratio:.72;padding:12px 9px!important;border:1px solid #9474a4;border-radius:18px;overflow:hidden;box-shadow:none;background:linear-gradient(0deg,#1e122bf2,#39294733),var(--demo-scene) center/cover;color:#fff2dc;cursor:pointer;text-align:left}
+.ai-demo-card>img{position:absolute;object-fit:contain;image-rendering:pixelated;width:92%;height:65%;left:4%;top:8%}
+.ai-demo-card>span{position:relative;display:block;z-index:1;max-width:100%;padding-bottom:26px}.ai-demo-card b{font-size:12px;line-height:1.3;display:block}.ai-demo-card small{font-size:10px;color:#e1cde8;display:block;margin-top:5px}
+.ai-demo-card>i{position:absolute;bottom:10px;right:10px;background:#fff0f8;color:#43244e;width:28px;height:28px;display:grid;place-items:center;border-radius:50%;font:12px Arial}
+.ai-demo-card:hover,.ai-demo-card.is-playing{border-color:#ffd888;box-shadow:0 0 0 2px #eaaa7044}
+.ai-demo-player{padding:20px;margin-top:18px;border:1px solid #795987;background:#38253f;border-radius:18px}
+.ai-demo-player>div:first-child{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:#dbc6e4}
+.ai-demo-wave{display:flex;align-items:center;justify-content:space-between;gap:3px;height:92px;position:relative;margin:12px 0}
+.ai-demo-wave i{height:var(--bar);width:8px;flex:1;background:#82648c;border-radius:5px}.ai-demo-wave.is-playing i{background:#ed9bce;animation:ai-wave-pulse .8s ease-in-out infinite alternate}.ai-demo-wave.is-playing i:nth-child(3n){animation-delay:-.3s}.ai-wave-labels{display:flex;justify-content:space-between;color:#bba4c6;font-size:10px}
+@keyframes ai-wave-pulse{to{transform:scaleY(.55);opacity:.65}}
+.ai-listen-column .ai-listen-note{font-size:12px;margin-top:16px;color:#af98bc}
+.ai-band-toggle{margin-bottom:20px}.ai-band-toggle button{flex:1;background:transparent;border:0;box-shadow:none;padding:11px;border-radius:24px;color:#d9c5e3;font-size:14px}.ai-band-toggle button[aria-pressed=true]{color:#28182f}
+.ai-drop-call{width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;padding:26px 16px!important;border:1.5px dashed #b08cb9;background:#32233c;border-radius:18px;box-shadow:none;color:#f3e5f7;cursor:pointer}
+.ai-upload-icon{display:grid;place-items:center;width:44px;height:44px;background:#f1a5d9;color:#34213f;border-radius:50%;font:700 30px Arial}.ai-drop-call strong{font-size:15px}.ai-drop-call small{font-size:11px;color:#c3a9cf}.ai-drop-call:hover,.ai-drop-call.drag-over{border-color:#ffe0a5;background:#432b4e}
+.ai-record-row{display:flex;gap:10px;justify-content:space-between;margin:12px 0}.ai-record-row button{padding:9px 15px!important;min-height:38px;font-size:12px!important;border-radius:22px;box-shadow:none}
+.ai-preset-heading{font-size:13px;color:#c9aed2;margin:18px 0 10px}.ai-preset-chips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.ai-preset-chips button{display:flex;align-items:center;gap:7px;padding:6px 9px!important;min-width:0;border:1px solid #765481;border-radius:24px;background:#392640;box-shadow:none;color:#e7d7ed;font:11px Arial}.ai-preset-chips button.active{border-color:#f4c979;box-shadow:0 0 0 1px #edb85a50}.ai-preset-chips img{width:28px;height:28px;object-fit:contain;image-rendering:pixelated}.ai-preset-chips span{flex:1;text-align:left}.ai-preset-chips i{font-style:normal;color:#f2c886}
+#aiVoiceFeedback{font-size:11px;color:#c2a8ce;line-height:1.5;margin:8px 0}
+.ai-performer-details,.ai-extra-tools{margin:16px 0;color:#cfb8db;font-size:12px}.ai-performer-details summary,.ai-extra-tools summary{cursor:pointer;padding:9px 0}
+.ai-performer-details .ai-performers{padding:12px;margin:8px 0;border-radius:12px}.ai-performer-details .ai-performer-heading{display:none}.ai-performer-details .ai-input-actions{display:none}.ai-performer-details .ai-performers>small{display:none}
+#aiCreation .ai-song-panel{padding:0;background:transparent;border:0;margin:22px 0 0}
+.ai-song-heading>small{display:none}
+#aiCreation .ai-song-heading h2{font-size:18px!important}
+#aiCreation #aiSongPrompt{background:#3b2945;border:1px solid #8b6599;border-radius:12px;resize:vertical;min-height:70px;font:14px/1.5 Arial,sans-serif;color:#f6e4f6;padding:12px}
+#aiCreation #aiSongPrompt:focus{outline:2px solid #e99ed2;outline-offset:2px}
+.ai-song-panel>label[for=aiSongPrompt]{display:none}
+#aiCreation .ai-song-options{display:flex;justify-content:space-between;align-items:center;gap:14px;margin:12px 0}
+#aiCreation .ai-song-options label{font-size:12px;display:flex;align-items:center;gap:9px}#aiCreation .ai-song-options select{font-size:12px;min-height:36px;border-radius:10px}
+#aiCreation #generateAiSong{width:100%;min-height:48px;border:1px solid #eda4d4;background:#ed9fd3;color:#2f1b37;border-radius:24px;font-size:16px;box-shadow:none}
+.ai-song-panel>small,#aiSongStatus{font-size:11px!important;color:#b89dc5;line-height:1.5}
+.ai-performance-result{border:1px solid #775482;border-radius:22px;padding:26px;margin-top:22px;background:#2b1e37}.ai-result-heading{display:flex;align-items:baseline;justify-content:space-between;gap:20px}.ai-result-heading p{color:#bfa5ca;font-size:12px}
+.ai-performance-result .stage-window{box-shadow:none;border:1px solid #745181;border-radius:16px;overflow:hidden}.ai-performance-result .stage-window>.titlebar{min-height:40px;padding:8px 16px;font-size:12px}
+.ai-performance-result .stage{max-height:430px;aspect-ratio:2.8}.ai-performance-result .transport{padding:14px;gap:12px}.ai-performance-result .stage-window .transport-main{flex-wrap:wrap}.ai-performance-result .transport .primary{min-height:42px;font-size:16px}
+.ai-result-actions .bottom-row{margin:18px 0 0;padding:0;gap:14px;justify-content:flex-end}.ai-result-actions .bottom-row>p,.ai-result-actions .step-title{display:none}.ai-result-actions .save-cluster{flex-wrap:wrap}
+.ai-performance-result .ai-next{padding-top:16px;margin-top:18px}.ai-performance-result .ai-next p{max-width:none}
+@media(max-width:1050px){.ai-create-grid{gap:22px;padding:22px}.ai-demo-cards{gap:7px}.ai-preset-chips{grid-template-columns:repeat(2,minmax(0,1fr))}.ai-demo-card b{font-size:11px}}
+@media(max-width:760px){.ai-layout-header{flex-direction:column;align-items:stretch;gap:12px}.ai-mode-switch{width:100%}.ai-create-grid{grid-template-columns:1fr;padding:18px;border-radius:18px}.ai-listen-column{padding-top:0}.ai-demo-card{aspect-ratio:.78}.ai-demo-player{padding:14px}.ai-demo-wave{height:68px}.ai-performance-result{padding:14px}.ai-result-heading{display:block}.ai-performance-result .stage{aspect-ratio:1.8}.ai-preset-chips{grid-template-columns:repeat(3,minmax(0,1fr))}.ai-preset-chips button{font-size:10px}.ai-preset-chips img{width:22px;height:22px}}
+@media(prefers-reduced-motion:reduce){.ai-demo-wave.is-playing i{animation:none}}
+#aiCreation [hidden]{display:none!important}
+#layoutPreviewAudio{display:block;width:100%;height:40px;margin-top:18px}
+#aiCreation .ai-remix-tool{margin:20px 0;padding:20px;border:1px solid #9b73ac;border-radius:16px;background:#3a2549}
+#aiCreation .ai-remix-tool summary{font-size:18px;color:#fff0d6}#aiCreation .ai-remix-tool p{font-size:13px;line-height:1.6;color:#cdb7da}
+#aiCreation .ai-remix-tool #generateMeowRemix{width:100%;padding:15px;margin:12px 0;background:#efa2d5;color:#2f1c38;border:0;border-radius:24px;box-shadow:none;font:700 16px Arial}
+.layout-eleven{border-top:1px solid #70507d;padding-top:20px;margin-top:22px}.layout-eleven>p{color:#bda3c9;font-size:13px;line-height:1.6}.layout-eleven .ai-task-tabs{margin:14px 0}.layout-eleven .ai-task-tabs button{font-size:12px;min-height:40px;padding:10px 14px}
+#layoutUpload .voice-drop-zone{margin:0;width:100%;min-height:170px;border:1.5px dashed #b08cb9;border-radius:18px;background:#33223f;box-shadow:none;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px;padding:24px}
+#layoutUpload .voice-drop-zone b{font-size:17px}#layoutUpload .voice-drop-zone span{font-size:12px;color:#cbb1d8}#layoutUpload #voiceStatus{font-size:12px;color:#c4aacd;line-height:1.5;margin:12px 0}
+.ai-listen-column .ai-example{border-radius:16px;margin:20px 0;padding:18px}.ai-listen-column .ai-example h2{font-size:18px!important}.ai-listen-column .ai-example p,.ai-listen-column .ai-example small{font-size:12px;color:#c7aed2}.ai-input-column>.ai-listen-note{font-size:12px;color:#bda3c8;line-height:1.6}
+#aiCreation .ai-song-panel>p,#aiCreation .ai-song-heading>small{display:block}
+/* Mode switches use the same pill shape for anchors and buttons. */
+.studio-page .ai-mode-switch{border-radius:999px!important;padding:4px;gap:4px;align-items:stretch}
+.studio-page .ai-mode-switch>button,.studio-page .ai-mode-switch>a{border-radius:999px!important;margin:0!important;min-width:0;display:flex;align-items:center;justify-content:center;box-shadow:none!important;clip-path:none}
+.studio-page .ai-mode-switch>.active{border-radius:999px!important}
