@@ -28,9 +28,20 @@
  eleven.addEventListener('click',e=>{const b=e.target.closest('[data-layout-task]');if(b)task(b.dataset.layoutTask)});task('song');
  left.append(q('.ai-example'));q('.ai-example h2').textContent='Hear a finished pet choir';
  const result=document.createElement('section');result.className='ai-performance-result';result.innerHTML='<div class="ai-result-heading"><h2>Your pet performance</h2><p>Choose a scene, move your pets, then listen and save.</p></div>';q('.ai-stage-host').before(result);result.append(q('.ai-stage-host'),q('.ai-result-actions'),q('.ai-next'));
- const examples=[{id:'cat',name:'Gray Cat',asset:'gray-cat',file:'starter-cat.mp3',scene:'stage-neon-night.png'},{id:'ghost-cat',name:'Dachshund',asset:'dachshund',file:'starter-dachshund.mp3',scene:'stage-sunny-park.png'},{id:'bat-cat',name:'Samoyed',asset:'samoyed',file:'starter-samoyed.mp3',scene:'stage-seaside.png'},{id:'bunny',name:'Bunny synth',asset:'bunny',file:'bunny-call.wav',scene:'stage-sunny-park.png'}];
- left.querySelector('.ai-demo-cards').innerHTML=examples.map((p,i)=>`<button type="button" class="ai-demo-card" data-layout-preview="${i}" aria-label="Preview ${p.name}" style="--demo-scene:url('assets/backgrounds/${p.scene}')"><img src="assets/pets/${p.asset}.png" alt=""><span><b>${p.name}</b><small>${i===3?'Synthesized voice':'Starter call'}</small></span><i aria-hidden="true">▶</i></button>`).join('');
- right.querySelector('.ai-preset-chips').innerHTML=examples.slice(0,3).map((p,i)=>`<button type="button" data-layout-preview="${i}"><img src="assets/pets/${p.asset}.png" alt=""><span>${p.name}</span><i>▶</i></button>`).join('');
+ const starters=[
+  {name:'Gray Cat',asset:'gray-cat',file:'starter-cat.mp3'},
+  {name:'Dachshund',asset:'dachshund',file:'starter-dachshund.mp3'},
+  {name:'Samoyed',asset:'samoyed',file:'starter-samoyed.mp3'}
+ ];
+ const demos=[
+  {...starters[0],file:'preview-gray-cat.wav',scene:'stage-neon-night.png'},
+  {...starters[1],file:'preview-dachshund.wav',scene:'stage-sunny-park.png'},
+  {name:'White Cat',asset:'white-cat-christmas',file:'preview-white-cat.wav',scene:'stage-seaside.png'},
+  {name:'Bunny synth',asset:'bunny',file:'bunny-call.wav',scene:'stage-sunny-park.png'}
+ ];
+ const examples=[...demos,...starters];
+ left.querySelector('.ai-demo-cards').innerHTML=demos.map((p,i)=>`<button type="button" class="ai-demo-card" data-layout-preview="${i}" aria-label="Preview ${p.name}" style="--demo-scene:url('assets/backgrounds/${p.scene}')"><img src="assets/pets/${p.asset}.png" alt=""><span><b>${p.name}</b><small>${i===3?'Synthesized voice':'Starter call'}</small></span><i aria-hidden="true">▶</i></button>`).join('');
+ right.querySelector('.ai-preset-chips').innerHTML=starters.map((p,i)=>`<button type="button" data-layout-preview="${demos.length+i}"><img src="assets/pets/${p.asset}.png" alt=""><span>${p.name}</span><i>▶</i></button>`).join('');
  const audio=q('#layoutPreviewAudio');
  body.addEventListener('click',e=>{const b=e.target.closest('[data-layout-preview]');if(!b)return;const example=examples[Number(b.dataset.layoutPreview)];if(playing)q('#stop').click();pauseAiSong();if(q('#aiExamplePlay').textContent.includes('Stop'))q('#aiExamplePlay').click();audio.src='assets/sounds/'+example.file;q('#layoutPreviewName').textContent=example.name;audio.play().catch(()=>notify('Could not play this preview. Try again.'))});
  q('#aiExamplePlay').addEventListener('click',()=>audio.pause());q('#play').addEventListener('click',()=>audio.pause());q('#playMeowRemix').addEventListener('click',()=>audio.pause());
