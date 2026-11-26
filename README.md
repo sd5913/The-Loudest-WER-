@@ -34,6 +34,7 @@ The Loudest WER! 是一款桌面优先的像素宠物音乐网页。认识**白�
 | **Home · 首页** | Switch between **Sunset · 黄昏** and **Night · 夜晚**, click or drag the three cats, and use the quick links to open other pages. / 切换黄昏与夜晚，点击或拖动三只猫，并通过快捷入口进入其他页面。 |
 | **My Pets · 我的宠物** | Create a pixel-style pet preview from a photo, record or upload a short voice, and choose built-in pets. / 上传照片生成像素预览、录制或上传短声音，并选择内置宠物。 |
 | **Music Studio · 音乐工作室** | Choose pets and sounds, adjust **Volume, Pitch, Rhythm, Repeat**, use music templates, and play or pause a composition. / 选择宠物和叫声，调节音量、音高、节奏与重复，套用音乐模板并播放或暂停。 |
+| **Pet voice previews / ??????** | In AI Generate, tap Gray Cat, White Cat, or Dachshund to hear its demo in the shared player. / ? AI Generate ??????????????????????? |
 | **My Collection · 我的收藏** | Reopen or remove compositions saved in this browser. / 打开或移除此浏览器中保存的合奏。 |
 | **Gallery · 角色与声音展示** | Browse the project's pet characters and example sounds. / 浏览项目角色和示例声音。 |
 
