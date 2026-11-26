@@ -244,12 +244,7 @@ AI 生成声音的效果取决于参考音频质量、模型能力及具体生�
 | AI 生成声音与原始音色匹配 | 仍需进一步对比验证 | 继续优化 |
 | 动态角色与演奏状态联动 | 需要结合最终素材和播放逻辑测试 | 后续完善 |
 
-**总结：** ElevenLabs 为项目提供了 AI 声音生成的技术基础。建议保留 AI 声音功能，同时保留宠物原始声音作为个性化参考，使宠物声音既能参与音乐编排，也能尽可能维持角色自身的辨识度。
-=======
-## Cloudflare Worker deployment
-
-The Worker serves the public Studio and its rate-limited ElevenLabs generation API. A merge to `main` runs the deployment. [Setup, checks and rollback](docs/WORKER.md).
->>>>>>> main
+总结：ElevenLabs 为项目提供了 AI 声音生成的技术基础。建议保留 AI 声音功能，同时保留宠物原始声音作为个性化参考，使宠物声音既能参与音乐编排，也能尽可能维持角色自身的辨识度。
 
 
 ## Cloudflare Worker deployment
