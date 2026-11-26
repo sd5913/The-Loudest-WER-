@@ -60,3 +60,7 @@
 #layoutUpload .voice-drop-zone b{font-size:17px}#layoutUpload .voice-drop-zone span{font-size:12px;color:#cbb1d8}#layoutUpload #voiceStatus{font-size:12px;color:#c4aacd;line-height:1.5;margin:12px 0}
 .ai-listen-column .ai-example{border-radius:16px;margin:20px 0;padding:18px}.ai-listen-column .ai-example h2{font-size:18px!important}.ai-listen-column .ai-example p,.ai-listen-column .ai-example small{font-size:12px;color:#c7aed2}.ai-input-column>.ai-listen-note{font-size:12px;color:#bda3c8;line-height:1.6}
 #aiCreation .ai-song-panel>p,#aiCreation .ai-song-heading>small{display:block}
+/* Mode switches use the same pill shape for anchors and buttons. */
+.studio-page .ai-mode-switch{border-radius:999px!important;padding:4px;gap:4px;align-items:stretch}
+.studio-page .ai-mode-switch>button,.studio-page .ai-mode-switch>a{border-radius:999px!important;margin:0!important;min-width:0;display:flex;align-items:center;justify-content:center;box-shadow:none!important;clip-path:none}
+.studio-page .ai-mode-switch>.active{border-radius:999px!important}
