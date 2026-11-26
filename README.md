@@ -200,3 +200,6 @@ Music, adopted pets, and custom pet details are stored in this browser only. **S
 
 登记角色素材来源角色素材包+简短可行性结论：实际试了什么、结果如何、建议保留还是移除该功能。
 
+## Cloudflare Worker deployment
+
+The Worker serves the public Studio and its rate-limited ElevenLabs generation API. A merge to `main` runs the deployment. [Setup, checks and rollback](docs/WORKER.md).
