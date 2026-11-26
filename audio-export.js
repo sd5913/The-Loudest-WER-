@@ -7,7 +7,8 @@ function exportConnect(node,pet,mix,offline){
   node.connect(delay);delay.connect(wet).connect(mix);delay.connect(feedback).connect(delay);
  }
 }
-function exportVoice(p,when,offset,mix,offline){
+function exportVoice(p,when,offset,mix,offline,voiceLength=0){
+ if(p.aiPerformance==='music')return;
  const strength=(p.strength??70)/100*.7+.3;
  let buffer,rate=2**(((p.pitch||0)+offset)/12),level,range,filter=null;
  if(p.source==='instrument'){
@@ -23,9 +24,9 @@ function exportVoice(p,when,offset,mix,offline){
   buffer=clipBufferFor(p);
   if(!buffer)return;
   if(p.tone==='meow')rate=Math.max(.5,Math.min(4,(p.base||440)*rate*2/520));
-  range=clipRange(p,buffer);
+  range=remixVoiceRange(p,buffer,voiceLength,rate);
   level=Math.max(.001,p.volume/100*(p.tone==='custom'?.24*(customLevels.get(p.id)||1):p.tone==='meow'?.4:p.tone==='sample'?(p.id==='cat'?.24:.36):.22)*strength);
-  if(['sample','meow','custom'].includes(p.tone)){
+  if(['sample','meow','custom'].includes(p.tone)&&!(p.tone==='custom'&&p.remixPitch)){
    filter=offline.createBiquadFilter();filter.type='lowpass';
    filter.frequency.value=p.tone==='sample'&&p.id==='cat'?2500:p.tone==='custom'?2800:3200;
   }
@@ -40,19 +41,6 @@ function exportVoice(p,when,offset,mix,offline){
  if(filter)source.connect(filter).connect(gain);else source.connect(gain);
  exportConnect(gain,p,mix,offline);
  source.start(when,range.start,range.duration);source.stop(when+duration+.01);
-}
-function exportChord(step,when,mix,offline,bpm){
- if(!chordEnabled||step%4)return;
- const chord=chordPattern[Math.floor(step/4)],tones=chordDegrees[chord];
- if(!tones)return;
- const offset=musicKey==='Am'?0:keyOffsets[musicKey]||0;
- tones.forEach((semitones,index)=>{
-  const osc=offline.createOscillator(),gain=offline.createGain(),duration=Math.min(.75,240/bpm*.7);
-  osc.type='sine';osc.frequency.setValueAtTime(130.8128*2**((semitones+offset)/12),when);
-  gain.gain.setValueAtTime(0,when);gain.gain.linearRampToValueAtTime(index===0?.024:.013,when+.025);
-  gain.gain.exponentialRampToValueAtTime(.0001,when+duration);
-  osc.connect(gain).connect(mix);osc.start(when);osc.stop(when+duration+.02);
- });
 }
 async function exportAiSong(mix,offline,sectionSeconds){
  if(!aiSongData)return;
@@ -91,9 +79,9 @@ async function renderExportAudio({loops=1}={}){
   const at=.04+absoluteStep*60/bpm;
   for(const p of pets){
    if(p.muted||!petPlaysInLoop(p,cycle)||!effectiveSteps(p).includes(step))continue;
-   exportVoice(p,at,melodyOffset(p,step%clipPatternSteps(p)),mix,offline);
+   schedulePetBeat(p,step,at,60/bpm,(time,offset,length)=>exportVoice(p,time,offset,mix,offline,length));
   }
-  exportChord(step,at,mix,offline,bpm);
+  scheduleBacking(offline,mix,step,at,bpm);
  }
  await exportAiSong(mix,offline,seconds);
  return offline.startRendering();

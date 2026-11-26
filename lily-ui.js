@@ -23,7 +23,7 @@
  }
  // Remove empty translation remnants in UI labels, while preserving user data.
  function tidy(root){for(const el of root.querySelectorAll('button,small,label,option,[role=status],.titlebar,.range-labels,.stage-caption,.rail-heading,.song-actions,#timeLabel,#roomStatus,#petRole')){
-   for(const node of el.childNodes)if(node.nodeType===Node.TEXT_NODE)node.textContent=node.textContent.replace(/\s*[·/]\s*$/,'').replace(/\s*·\s*·\s*/g,' · ');
+   for(const node of el.childNodes)if(node.nodeType===Node.TEXT_NODE){const cleaned=node.textContent.replace(/\s*[·/]\s*$/,'').replace(/\s*·\s*·\s*/g,' · ');if(node.textContent!==cleaned)node.textContent=cleaned;}
  }}
  tidy(document);
  let pending=false;

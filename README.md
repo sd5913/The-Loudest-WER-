@@ -34,6 +34,7 @@ The Loudest WER! 是一款桌面优先的像素宠物音乐网页。认识**白�
 | **Home · 首页** | Switch between **Sunset · 黄昏** and **Night · 夜晚**, click or drag the three cats, and use the quick links to open other pages. / 切换黄昏与夜晚，点击或拖动三只猫，并通过快捷入口进入其他页面。 |
 | **My Pets · 我的宠物** | Create a pixel-style pet preview from a photo, record or upload a short voice, and choose built-in pets. / 上传照片生成像素预览、录制或上传短声音，并选择内置宠物。 |
 | **Music Studio · 音乐工作室** | Choose pets and sounds, adjust **Volume, Pitch, Rhythm, Repeat**, use music templates, and play or pause a composition. / 选择宠物和叫声，调节音量、音高、节奏与重复，套用音乐模板并播放或暂停。 |
+| **Pet voice previews / ??????** | In AI Generate, tap Gray Cat, White Cat, or Dachshund to hear its demo in the shared player. / ? AI Generate ??????????????????????? |
 | **My Collection · 我的收藏** | Reopen or remove compositions saved in this browser. / 打开或移除此浏览器中保存的合奏。 |
 | **Gallery · 角色与声音展示** | Browse the project's pet characters and example sounds. / 浏览项目角色和示例声音。 |
 
@@ -162,9 +163,43 @@ Music, adopted pets, and custom pet details are stored in this browser only. **S
 
 · Wang Yuanyuan：加入API+生成pet声音样本。✅️
 
-· Wang Yuting：更新小段节奏页面。✅️
+· Huang Yuting：更新小段节奏页面。✅️
 
 · Tao Xinyan：宠物视频反应。✅️
 
+**WEEK4:**
 
-The optional team Worker serves the public Studio and protects paid generation with Cloudflare Access. [Student setup, tests and rollback](docs/WORKER.md).
+· 界面与操作流程优化-Huang Yuting：
+
+全站仅保留英文，精简首页两侧文字和重复入口，放大主体画面；
+
+电脑附近增加简短引导；宠物改为直接拖动；调音台增加宠物快速切换；小节设置移到音轨区；
+
+放大调节控件；删除重复的“一键生成合奏"按钮。
+
+交付：一版可操作的新版界面，完成主要页面和交互修改。
+
+· 音乐功能修复与声音保存-You Xiu：
+
+同步版本，排查替换乐器后无声问题；确认音源可用及授权并且记录；检查音高、节奏、音量、循环和同步；
+
+验证两条声音路径——宠物创建时录音／上传、Studio内录音／上传—保存后能否恢复可播放的音源和模板；
+
+声音保存问题的修复，或明确的限制及提示需求。
+
+· 场景完善与试玩准备-Wang Yuanyuan：
+
+完善公园、海滨、演播厅／舞台背景和缩略图；配合舞台圆形场景按钮检查切换效果；
+
+准备无指导试玩任务和记录表，联系参与者可接入的场景素材+试玩任务、记录表与参与安排，验证ElevenLabs相关接口是否支持需要的参考音频输入。
+
+
+· 角色完善与AI采样可行性验证-Tao Xinyan：
+
+完善2-3只宠物及待机／演奏状态；以及能否保留宠物声音特征；
+
+登记角色素材来源角色素材包+简短可行性结论：实际试了什么、结果如何、建议保留还是移除该功能。
+
+## Cloudflare Worker deployment
+
+The Worker serves the public Studio and its rate-limited ElevenLabs generation API. A merge to `main` runs the deployment. [Setup, checks and rollback](docs/WORKER.md).

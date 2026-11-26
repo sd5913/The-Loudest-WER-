@@ -40,7 +40,31 @@
     starters,
     defaultPets,
     getPets: () => read('pets', []),
-    savePet(pet) { const pets = this.getPets().filter(item => item.id !== pet.id); pets.push(pet); return write('pets', pets); },
+    getCatalogPets() {
+      const edits = read('petEdits', {});
+      return [...starters, ...defaultPets].map(pet => ({ ...pet, ...(edits[pet.id] || {}) }));
+    },
+    getAllPets() { return [...this.getCatalogPets(), ...this.getPets()]; },
+    savePet(pet) {
+      const isCatalogPet = [...starters, ...defaultPets].some(item => item.id === pet.id);
+      if (isCatalogPet) {
+        const edits = read('petEdits', {});
+        edits[pet.id] = { ...pet };
+        return write('petEdits', edits);
+      }
+      const pets = this.getPets().filter(item => item.id !== pet.id);
+      pets.push(pet);
+      return write('pets', pets);
+    },
+    removePet(id) {
+      const isCatalogPet = [...starters, ...defaultPets].some(item => item.id === id);
+      if (isCatalogPet) {
+        const edits = read('petEdits', {});
+        delete edits[id];
+        if (!write('petEdits', edits)) return false;
+      } else if (!write('pets', this.getPets().filter(item => item.id !== id))) return false;
+      return write('owned', this.getOwned().filter(item => item !== id));
+    },
     getOwned: () => [...new Set(read('owned', []).map(id => ({'gray-cat':'cat',dachshund:'ghost-cat',samoyed:'bat-cat'})[id] || id))],
     adopt(id) { const owned = this.getOwned(); if (!owned.includes(id)) owned.push(id); return write('owned', owned); },
     getSongs() {

@@ -5,9 +5,6 @@
     "build:assets": "python3 scripts/build-worker-assets.py",
     "test:worker": "node --test worker/*.test.mjs"
   },
-  "dependencies": {
-    "jose": "6.2.10"
-  },
   "devDependencies": {
     "wrangler": "4.160.0"
   }

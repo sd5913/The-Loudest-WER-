@@ -1,37 +1,10 @@
-import { createRemoteJWKSet, jwtVerify } from "jose";
-
 const routes = new Map([
   ["/api/generate-sample", "sound-generation"],
   ["/api/generate-song", "music"],
   ["/api/generate-speech", "text-to-speech/21m00Tcm4TlvDq8ikWAM"]
 ]);
-const teamDomain = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.cloudflareaccess\.com$/;
-const audienceTag = /^[a-f0-9]{64}$/;
-const keySets = new Map();
-
 function error(status, message, headers = {}) {
   return Response.json({ error: message }, { status, headers: { "Cache-Control": "no-store", ...headers } });
-}
-
-async function authorizedSubject(request, env) {
-  const assertion = request.headers.get("Cf-Access-Jwt-Assertion");
-  if (!assertion || assertion.length > 16384) return null;
-  const issuer = "https://" + env.ACCESS_TEAM_DOMAIN;
-  if (!keySets.has(issuer)) {
-    keySets.set(issuer, createRemoteJWKSet(new URL("/cdn-cgi/access/certs", issuer)));
-  }
-  try {
-    const { payload } = await jwtVerify(assertion, keySets.get(issuer), {
-      algorithms: ["RS256"], issuer, audience: env.ACCESS_AUD,
-      requiredClaims: ["exp", "sub", "email", "type"]
-    });
-    // Access issues a user application token after the configured team's Allow policy succeeds.
-    if (payload.type === "app" && typeof payload.sub === "string" && payload.sub.trim() &&
-        typeof payload.email === "string" && payload.email.trim()) return payload.sub;
-  } catch {
-    // An unavailable signing key or invalid assertion must never authorize generation.
-  }
-  return null;
 }
 
 // Both client requests and upstream responses may arrive without a Content-Length.
@@ -119,13 +92,10 @@ export default {
     if (request.headers.get("Origin") !== url.origin) return error(403, "Open the Studio on this site.");
     const type = request.headers.get("Content-Type")?.split(";")[0].trim().toLowerCase();
     if (type !== "application/json") return error(415, "Expected JSON.");
-    if (!teamDomain.test(env.ACCESS_TEAM_DOMAIN) || !audienceTag.test(env.ACCESS_AUD) ||
-        typeof env.GENERATION_LIMITER?.limit !== "function" ||
+    if (typeof env.GENERATION_LIMITER?.limit !== "function" ||
         typeof env.ELEVENLABS_API_KEY !== "string" || !env.ELEVENLABS_API_KEY.trim()) {
       return error(503, "Generation is unavailable.");
     }
-    const subject = await authorizedSubject(request, env);
-    if (!subject) return error(401, "Team sign-in required.");
 
     let payload;
     try {
@@ -137,7 +107,9 @@ export default {
     }
     if (!payload) return error(400, "Invalid generation request.");
     try {
-      const result = await env.GENERATION_LIMITER.limit({ key: subject });
+      // The same IP bucket applies across all paid endpoints. Do not use client-supplied forwarding headers.
+      const ip = request.headers.get("CF-Connecting-IP")?.trim();
+      const result = await env.GENERATION_LIMITER.limit({ key: ip || "unknown-client" });
       if (result.success !== true) return error(429, "Generation limit reached. Try again later.");
     } catch {
       return error(503, "Generation is unavailable.");
