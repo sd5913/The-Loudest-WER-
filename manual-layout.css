@@ -1,0 +1,42 @@
+/* The same header, spacing and cards as AI creation; manual controls retain IDs. */
+#manualStudioHeader{display:none;margin:26px auto 28px;max-width:1500px}
+.studio-page[data-studio-view="manual"] #manualStudioHeader{display:flex}
+.studio-page[data-studio-view="manual"]>.intro,.studio-page[data-studio-view="manual"] main>.intro{display:none!important}
+.studio-page[data-studio-view="manual"] .workspace{max-width:1500px;margin:0 auto;gap:18px!important}
+.studio-page[data-studio-view="manual"] .scene-rail{padding:12px 20px!important;gap:14px;background:#2d203b;border:1px solid #775482;border-radius:16px!important;box-shadow:none}
+.studio-page[data-studio-view="manual"] .scene-rail>.rail-heading,.studio-page[data-studio-view="manual"] .scene-rail>.manual-mode-label,.studio-page[data-studio-view="manual"] .scene-rail>[data-flow="choose"]{display:none!important}
+.studio-page[data-studio-view="manual"] .scene-rail #studioHint{margin:0;flex:1;color:#cbb3d5;font-size:12px}
+.studio-page[data-studio-view="manual"] .scene-rail #christmasTemplate{margin:0;padding:9px 14px;box-shadow:none;border:1px solid #8c669d;border-radius:20px;font-size:12px}
+.studio-page[data-studio-view="manual"] .left-column{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;gap:28px;padding:26px;border:1px solid #775482;border-radius:24px;background:linear-gradient(120deg,#30203d,#281b35)}
+.manual-stage-dock{display:flex;flex-direction:column;gap:20px;grid-column:1;min-width:0}
+.studio-page[data-studio-view="manual"] .pet-mixer{grid-column:2;grid-row:1;min-width:0;border:1px solid #775482;border-radius:18px;background:#2e203b;box-shadow:none;overflow:hidden}
+.studio-page[data-studio-view="manual"] .pet-mixer>.titlebar{background:#3b2849;border:0;border-bottom:1px solid #775482;min-height:48px;padding:14px 18px;font-size:13px}
+.studio-page[data-studio-view="manual"] .pet-mixer>.titlebar>span:last-child{display:none}
+.studio-page[data-studio-view="manual"] .pet-mixer-body{padding:20px}
+.studio-page[data-studio-view="manual"] .pet-mixer .sound-panel{grid-template-columns:minmax(0,1fr);gap:16px}
+.studio-page[data-studio-view="manual"] .creation-steps{gap:12px;justify-content:space-between;margin-bottom:18px;padding-bottom:15px}.studio-page[data-studio-view="manual"] .creation-steps a{font-size:11px;gap:5px}
+.studio-page[data-studio-view="manual"] .mixer-pet-switcher{gap:7px;margin-bottom:20px}
+.studio-page[data-studio-view="manual"] .mixer-pet-switcher button{border-radius:12px;font-size:12px;padding:8px;box-shadow:none}
+.studio-page[data-studio-view="manual"] .mixer-pet-switcher button.active{border:1px solid #ffd399;box-shadow:0 0 0 2px #f1b0dc45,0 0 12px #d27bc84d;background:#654073}
+.studio-page[data-studio-view="manual"] .selected-pet{padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid #73517f}
+.studio-page[data-studio-view="manual"] .manual-stage-dock .stage-window{border:1px solid #775482;border-radius:18px;box-shadow:none;overflow:hidden}
+.studio-page[data-studio-view="manual"] .manual-stage-dock .stage{aspect-ratio:1.65;min-height:0}
+.studio-page[data-studio-view="manual"] .manual-stage-dock .titlebar{padding:10px 14px;height:auto;min-height:44px;background:#3b2849;border-bottom:1px solid #775482;font-size:12px}
+.studio-page[data-studio-view="manual"] .manual-stage-dock .scene-picker{gap:6px;flex-wrap:wrap}
+.studio-page[data-studio-view="manual"] .manual-stage-dock .scene-picker select{max-width:130px;font-size:12px}
+.studio-page[data-studio-view="manual"] .manual-stage-dock .transport{padding:16px;gap:12px;background:#35243f;border-top:1px solid #775482}
+.studio-page[data-studio-view="manual"] .manual-stage-dock .transport-main{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.studio-page[data-studio-view="manual"] .manual-stage-dock #play{font-size:16px;padding:12px 18px;min-height:46px;border:1px solid #eda4d4;border-radius:24px;background:#ed9fd3;color:#2f1b37;box-shadow:none}
+.studio-page[data-studio-view="manual"] .manual-stage-dock .transport .square{width:42px;height:42px;min-width:42px;border-radius:12px;box-shadow:none;font-size:18px}
+.studio-page[data-studio-view="manual"] .manual-stage-dock .transport .waveform{display:none}
+.studio-page[data-studio-view="manual"] .manual-stage-dock .bottom-row{display:flex;flex-wrap:wrap;gap:14px;margin:0;padding:20px;background:#2e203b;border:1px solid #775482;border-radius:18px}
+.studio-page[data-studio-view="manual"] .manual-stage-dock .bottom-row>.step-title{font-size:18px!important;flex-basis:100%;margin:0!important}
+.studio-page[data-studio-view="manual"] .manual-stage-dock .save-cluster{display:flex;flex-wrap:wrap;gap:10px;width:100%;justify-content:flex-start}
+.studio-page[data-studio-view="manual"] .manual-stage-dock .bottom-row button{box-shadow:none;border-radius:18px;font-size:12px;padding:10px 14px}
+.studio-page[data-studio-view="manual"] .manual-stage-dock #random{width:100%;font-size:14px;justify-content:space-between;display:flex;align-items:center;gap:10px}
+.studio-page[data-studio-view="manual"] .sound-details{border-radius:12px;background:#30213e}
+.studio-page[data-studio-view="manual"] .pet-mixer .basic-volume{border-radius:12px}
+.studio-page[data-studio-view="manual"] .instrument-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.studio-page[data-studio-view="manual"] .melody-grid{min-width:460px}.studio-page[data-studio-view="manual"] .melody-scroller{overflow:auto;max-width:100%}
+@media(max-width:1100px){.studio-page[data-studio-view="manual"] .left-column{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);padding:18px;gap:18px}.studio-page[data-studio-view="manual"] .manual-stage-dock .titlebar{flex-wrap:wrap;gap:8px}.studio-page[data-studio-view="manual"] .creation-steps{flex-direction:column;gap:9px}}
+@media(max-width:800px){.studio-page[data-studio-view="manual"] #manualStudioHeader{flex-direction:column;align-items:stretch;gap:12px}.studio-page[data-studio-view="manual"] .left-column{grid-template-columns:minmax(0,1fr);padding:16px}.studio-page[data-studio-view="manual"] .pet-mixer{grid-column:1;grid-row:auto}.studio-page[data-studio-view="manual"] .manual-stage-dock .stage{aspect-ratio:1.7;min-height:0}.studio-page[data-studio-view="manual"] .pet-mixer-body{padding:16px}.studio-page[data-studio-view="manual"] .creation-steps{flex-direction:row;flex-wrap:wrap}}

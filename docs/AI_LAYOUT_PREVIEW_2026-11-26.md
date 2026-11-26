@@ -11,3 +11,9 @@ The existing remix generator still requires an uploaded or recorded call for the
 Validation: all JavaScript passed JavaScriptCore syntax checks; original HTML control IDs were retained; all referenced scripts/styles exist; the page, layout assets and four audio previews returned HTTP 200 from the local server. Protected source files were compared byte-for-byte with the base. Desktop/mobile rendering, microphone permissions, actual audio playback, saved-session exports and live paid API generation have not been browser-tested in this environment.
 
 Local preview: http://127.0.0.1:8770/studio.html#ai
+
+## Manual layout follow-up
+
+Manual Compose now shares the AI header and segmented mode navigation. The stage and existing save/export controls occupy the left column; the existing pet mixer, sound inputs, rhythm/melody editor and sound settings occupy the right. At 800px and below the columns stack. Original controls are moved as DOM nodes only when entering Manual Compose; the AI stage/save routing remains in place.
+
+Checks repeated after this change: all JavaScript parses; all original control IDs are retained; referenced files exist and the local preview serves the manual layout scripts/styles. Music, remix, composer, export, API, storage and original mode-routing scripts remain byte-for-byte identical to main 809fab1. Full browser rendering, mode-switch interaction, microphone, audio and live API tests remain unverified.
